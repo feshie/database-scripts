@@ -63,8 +63,9 @@ class WundergroundFetcher:
 
     def fetch_xml(self, station_id):
         try:
-            return libxml2.parseDoc(urllib.urlopen(
-                "http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=%s"% station_id ).read())
+            url = "http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=%s"% station_id
+            self.logger.debug("Fetching: %s" % url)
+            return libxml2.parseDoc(urllib.urlopen(url).read())
         except Error, e:
             self.logger.error( "An error occured when getting the xml")
             self.logger.error("Error %d %s" % (e.args[0], e.args[1]))
@@ -87,13 +88,117 @@ class WundergroundFetcher:
                 self.logger.debug("Adding %s" % id)
         return clean
 
+
+    def fetch_all_stations(self):
+        stations = self.get_stations()
+        for s in stations:
+            self.logger.debug("Processing %s" % s)
+            try:
+                xml = self.fetch_xml(s)
+                data = self.parse_xml(xml)
+                self.store_data(s, data)
+            except:
+                continue #Try the next station
+
+
+    def parse_xml(self, xml):
+        data = wundergroundNoaaData()
+        time =  datetime.datetime.strptime(xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
+                "%a, %d %b %Y %H:%M:%S %Z")
+        #description = xml.xpathEval('//current_observation/weather')[0].content
+        temperature = xml.xpathEval('//current_observation/temp_c')[0].content
+        humidity = xml.xpathEval('//current_observation/relative_humidity')[0].content
+        wind_direction = xml.xpathEval('//current_observation/wind_degrees')[0].content
+        wind_speed =  xml.xpathEval('//current_observation/wind_mph')[0].content
+        #wind_gust_speed = xml.xpathEval('//current_observation/wind_gust_mph')[0].content
+        pressure = xml.xpathEval('//current_observation/pressure_mb')[0].content
+        dewpoint = xml.xpathEval('//current_observation/dewpoint_c')[0].content
+        #heat_index =   xml.xpathEval('//current_observation/heat_index_c')[0].content
+        #windchill = xml.xpathEval('//current_observation/windchill_c')[0].content
+        #solar_radiation = xml.xpathEval('//current_observation/solar_radiation')[0].content
+        #uv = xml.xpathEval('//current_observation/UV')[0].content
+        #precipitation_1hr = xml.xpathEval('//current_observation/precip_1hr_metric')[0].content
+        #precipitation_day = xml.xpathEval('//current_observation/precip_today_metric')[0].content
+            
+        data.time = time
+
+        #if description.replace(" ","").isalpha():
+        #    data.description = description
+        if is_number(temperature):
+            data.temperature = temperature
+            self.logger.debug("Temperature = %s" % temperature)
+        else:
+            self.logger.error("Temperature is not a number: %s" % temperature)
+        humidity = humidity.strip("%")
+        if is_number(humidity):
+            data.humidity = humidity
+            self.logger.debug("Humidity = %s" % humidity)
+        else:
+            self.logger.error("Humidity is not a number: %s" % humidity)
+        if is_number(wind_direction):
+            data.wind_direction = wind_direction
+            self.logger.debug("Wind direction = %s" % wind_direction)
+        else:
+            self.logger.error("Wind dir is not a number: %s" % wind_dirction)
+        if is_number(wind_speed):
+            data.wind_speed = wind_speed
+            self.logger.debug("Wind speed = %s" % wind_speed)
+        else:
+            self.logger.error("Wind speed in not a number: %s" % wind_speed)
+        #if is_number(wind_gust_speed):
+        #    data.wind_gust_speed = wind_gust_speed
+        if is_number(pressure):
+            data.pressure = pressure
+            self.logger.debug("Pressue = %s" % pressure)
+        else:
+            self.logger.error("Pressure is not a number: %s" % pressure)
+        if is_number(dewpoint):
+            data.dewpoint = dewpoint
+            self.logger.debug("Dewpoint = %s" % dewpoint)
+        else:
+            self.logger.error("Dewpoint is not a number: %s" % dewpoint)
+        #if is_number(heat_index):
+        #    data.heat_index = heat_index
+        #if is_number(windchill):
+        #    data.windchill = windchill
+        #if is_number(solar_radiation):
+        #    data.solar_radiation = solar_radiation
+        #if is_number(uv):
+        #    data.uv =uv
+        #if is_number(precipitation_1hr):
+        #    data.precipitation_1hr = precipitation_1hr
+        #if is_number(precipitation_day):
+        #    data.precipitation_day = precipitation_day
+        return data
+    
+    def store_data(self, location_id, data):
+        cursor = self.db.cursor()
+        if data.temperature is not None:
+            cursor.execute("""INSERT IGNORE INTO temperature_readings (device, timestamp, value) VALUES (%s, %s, %s)""",
+                (location_id, data.time, data.temperature))
+        if data.humidity is not None:
+            cursor.execute("INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
+                (location_id, data.time, data.humidity))
+        if data.wind_direction is not None and data.wind_speed is not None:
+            cursor.execute("INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
+                (location_id, data.time, data.wind_direction, data.wind_speed))
+        if data.pressure is not None:
+            cursor.execute("INSERT IGNORE INTO pressure_readings (device, timestamp,value) VALUES (%s, %s, %s)",
+                (location_id, data.time, data.pressure))
+        if data.dewpoint is not None:
+            cursor.execute("INSERT IGNORE INTO dewpoint_readings (device, timestamp,value) VALUES (%s, %s, %s)",
+                (location_id, data.time, data.dewpoint))
+        cursor.close()
+        self.db.commit()
+        self.logger.debug("Data saved for station %s" % location_id)
+
 if __name__ == "__main__":
     parser = OptionParser()
     group = OptionGroup(parser, "Verbosity Options",
         "Options to change the level of output")
     group.add_option("-q", "--quiet", action="store_true",
          dest="quiet", default=False,
-        help="Supress all but critical errors")
+    help="Supress all but critical errors")
     group.add_option("-v", "--verbose", action="store_true",
         dest="verbose", default=False,
         help="Print all information available")
@@ -110,106 +215,29 @@ if __name__ == "__main__":
         config = DEFAULT_CONFIG
     else:
         config = options.config_file
-    logger.debug("Finished parsing arguments")
+        logger.debug("Finished parsing arguments")
     get_wunderground(config)
 
-def store_data(location_id, data):
-	cursor = db.cursor()
-	cursor.execute(""" INSERT IGNORE INTO wunderground_personal_data (location_id, timestamp, description, temperature, humidity, wind_direction, wind_speed,wind_gust_speed, pressure, dewpoint,  heat_index, windchill, solar_radiation, uv, precipitation_1hr, precipitation_day) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-		 (location_id, data.time, data.description, data.temperature, data.humidity, data.wind_direction, 
-			data.wind_speed, data.wind_gust_speed, data.pressure, data.dewpoint, data.heat_index, data.windchill,
-			data.solar_radiation, data.uv, data.precipitation_1hr, data.precipitation_day))
-	cursor.close()
-	db.commit()
 
 
 
-def parse_xml(xml):
-	data = wundergroundNoaaData()
-	try:
-		time =  datetime.datetime.strptime(xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
-				"%a, %d %B %Y %H:%M:%S %Z")
-		description = xml.xpathEval('//current_observation/weather')[0].content
-		temperature = xml.xpathEval('//current_observation/temp_c')[0].content
-		humidity = xml.xpathEval('//current_observation/relative_humidity')[0].content
-		wind_direction = xml.xpathEval('//current_observation/wind_degrees')[0].content
-		wind_speed =  xml.xpathEval('//current_observation/wind_mph')[0].content
-		wind_gust_speed = xml.xpathEval('//current_observation/wind_gust_mph')[0].content
-		pressure = xml.xpathEval('//current_observation/pressure_mb')[0].content
-		dewpoint = xml.xpathEval('//current_observation/dewpoint_c')[0].content
-		heat_index =   xml.xpathEval('//current_observation/heat_index_c')[0].content
-		windchill = xml.xpathEval('//current_observation/windchill_c')[0].content
-		solar_radiation = xml.xpathEval('//current_observation/solar_radiation')[0].content
-		uv = xml.xpathEval('//current_observation/UV')[0].content
-		precipitation_1hr = xml.xpathEval('//current_observation/precip_1hr_metric')[0].content
-		precipitation_day = xml.xpathEval('//current_observation/precip_today_metric')[0].content
-			
-		data.time = time
-
-		if description.replace(" ","").isalpha():
-			data.description = description
-		if is_number(temperature):
-			data.temperature = temperature
-		if is_number(humidity):
-			data.humidity = humidity
-		if is_number(wind_direction):
-			data.wind_direction = wind_direction
-		if is_number(wind_speed):
-			data.wind_speed = wind_speed
-		if is_number(wind_gust_speed):
-			data.wind_gust_speed = wind_gust_speed
-		if is_number(pressure):
-			data.pressure = pressure
-		if is_number(dewpoint):
-			data.dewpoint = dewpoint
-		if is_number(heat_index):
-			data.heat_index = heat_index
-		if is_number(windchill):
-			data.windchill = windchill
-		if is_number(solar_radiation):
-			data.solar_radiation = solar_radiation
-		if is_number(uv):
-			data.uv =uv
-		if is_number(precipitation_1hr):
-			data.precipitation_1hr = precipitation_1hr
-		if is_number(precipitation_day):
-			data.precipitation_day = precipitation_day
-
-
-
-
-		return data
-	except ValueError, e:
-		print "Excepted numbers only"
-		print "Error %d %s" % (e.args[0], e.args[1])
 
 class wundergroundNoaaData:
-	"""represents data from wunderground noaa nodes"""
-	def __init__(self):
-		self.time = None
-		self.description = None
-		self.temperature = None
-		self.humidity = None
-		self.wind_direction = None
-		self.wind_speed = None
-		self.wind_gust_speed = None
-		self.pressure = None
-		self.dewpoint = None
-		self.heat_index = None
-		self.windchill = None
-		self.solar_radiation = None
-		self.uv = None
-		self.precipitation_1hr = None
-		self.precipitation_day = None
+    """represents data from wunderground noaa nodes"""
+    def __init__(self):
+        self.time = None
+        self.description = None
+        self.temperature = None
+        self.humidity = None
+        self.wind_direction = None
+        self.wind_speed = None
+        self.wind_gust_speed = None
+        self.pressure = None
+        self.dewpoint = None
+        self.heat_index = None
+        self.windchill = None
+        self.solar_radiation = None
+        self.uv = None
+        self.precipitation_1hr = None
+        self.precipitation_day = None
 
-def foo():
-    try:
-        db = MySQLdb.connect(host = db_server, user = db_user, passwd = db_password, db = db_database)
-        xml = fetch_xml(id)
-        data = parse_xml(xml)
-        store_data(id, data)
-        time.sleep(5)	
-        db.close()
-    except MySQLdb.Error, e:
-        print "Error %d %s" % (e.args[0], e.args[1])
-        sys.exit(1)
