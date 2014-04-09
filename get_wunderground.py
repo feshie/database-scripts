@@ -16,7 +16,7 @@ from dateutil.tz import *
 import feshiedb
 
 LOG_LEVEL = logging.ERROR
-DEFAULT_CONFIG = "database.ini"
+DEFAULT_CONFIG = "db.ini"
 
 
 #IDs that are in the database but are no longer valid so whould be ignored
@@ -34,6 +34,25 @@ def is_number(s):
 
 class XmlError(Exception):
     pass
+
+class WundergroundNoaaData:
+    """represents data from wunderground noaa nodes"""
+    def __init__(self):
+        self.time = None
+        self.description = None
+        self.temperature = None
+        self.humidity = None
+        self.wind_direction = None
+        self.wind_speed = None
+        self.wind_gust_speed = None
+        self.pressure = None
+        self.dewpoint = None
+        self.heat_index = None
+        self.windchill = None
+        self.solar_radiation = None
+        self.uv = None
+        self.precipitation_1hr = None
+        self.precipitation_day = None
 
 class WundergroundFetcher:
 
@@ -97,12 +116,13 @@ class WundergroundFetcher:
                 xml = self.fetch_xml(s)
                 data = self.parse_xml(xml)
                 self.store_data(s, data)
-            except:
+            except Exception, e:
+                print e
                 continue #Try the next station
 
 
     def parse_xml(self, xml):
-        data = wundergroundNoaaData()
+        data = WundergroundNoaaData()
         time =  datetime.datetime.strptime(xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
                 "%a, %d %b %Y %H:%M:%S %Z")
         #description = xml.xpathEval('//current_observation/weather')[0].content
@@ -208,36 +228,16 @@ if __name__ == "__main__":
     help="Config file containing database credentials")
     (options, args) = parser.parse_args()
     if options.quiet:
-        logger.setLevel = logging.CRITICAL
+        log_level = logging.CRITICAL
     elif options.verbose:
-        logger.setLevel = logging.DEBUG
+        log_level = logging.DEBUG
     if options.config_file is None:
         config = DEFAULT_CONFIG
     else:
         config = options.config_file
-        logger.debug("Finished parsing arguments")
-    get_wunderground(config)
+    w = WundergroundFetcher(config, log_level)
+    w.fetch_all_stations()
 
 
 
-
-
-class wundergroundNoaaData:
-    """represents data from wunderground noaa nodes"""
-    def __init__(self):
-        self.time = None
-        self.description = None
-        self.temperature = None
-        self.humidity = None
-        self.wind_direction = None
-        self.wind_speed = None
-        self.wind_gust_speed = None
-        self.pressure = None
-        self.dewpoint = None
-        self.heat_index = None
-        self.windchill = None
-        self.solar_radiation = None
-        self.uv = None
-        self.precipitation_1hr = None
-        self.precipitation_day = None
 
