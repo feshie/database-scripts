@@ -1,21 +1,21 @@
 #!/usr/bin/env python
+"""
+    Fetchs data from the wunderground api and stores it in the database
+    When runs as a commandline script will get data for all devices in 
+    the database
+"""
 import logging 
-from optparse import OptionParser,OptionGroup  
+from optparse import OptionParser, OptionGroup  
 #has to run on a server with python 2.6 so argparse is not an option
 
 import libxml2
 import urllib
-
-
 import MySQLdb
-import sys
-import time
 import datetime
-from dateutil.tz import *
 
 import feshiedb
 
-LOG_LEVEL = logging.ERROR
+DEFAULT_LOG_LEVEL = logging.ERROR
 DEFAULT_CONFIG = "db.ini"
 
 
@@ -24,15 +24,22 @@ DEFAULT_CONFIG = "db.ini"
 IGNORE_IDS = []
 
 def is_number(s):
-	try:
-		float(s)
-		ret = True
-	except ValueError:
-		ret = False	
-	return ret
+    """
+        Checks to see if a string is a number of if there is something
+        preventing a conversion to float
+    """
+    try:
+        float(s)
+        ret = True
+    except ValueError:
+        ret = False 
+    return ret
 
 
 class XmlError(Exception):
+    """
+        Error type for if something goes wrong fetching the XML
+    """
     pass
 
 class WundergroundNoaaData:
@@ -55,14 +62,18 @@ class WundergroundNoaaData:
         self.precipitation_day = None
 
 class WundergroundFetcher:
+    """
+        This class actually does the work of getting the data and storing it
+    """
 
-
-    def __init__(self, config, logging_level):
+    def __init__(self, config_file, logging_level):
         logging.basicConfig()
         self.logger = logging.getLogger("WundergroundFetcher")
         self.logger.setLevel(logging_level)
         self.logger.debug("Loading database config")
-        self.db = self.__dbconnect(feshiedb.FeshieDb(config))
+        self.db = self.__dbconnect(feshiedb.FeshieDb(config_file))
+        if self.db is None:
+            exit(1)
 
 
     def __dbconnect(self, db_config):
@@ -71,12 +82,14 @@ class WundergroundFetcher:
         password = db_config.password
         database = db_config.database
         try:
-            db = MySQLdb.connect(host = host, user = user, passwd = password, db = database)
+            db = MySQLdb.connect(host = host, user = user,
+                passwd = password, db = database)
             self.logger.info("Connected to database %s on %s" %(database, host))
             return db
         except MySQLdb.Error, e:
             self.logger.critical("Unable to connect to db %s on %s as user %s" %
                 (database, host, user))
+            self.logger.critical(e)
             return None
 
 
@@ -85,7 +98,7 @@ class WundergroundFetcher:
             url = "http://api.wunderground.com/weatherstation/WXCurrentObXML.asp?ID=%s"% station_id
             self.logger.debug("Fetching: %s" % url)
             return libxml2.parseDoc(urllib.urlopen(url).read())
-        except Error, e:
+        except XmlError, e:
             self.logger.error( "An error occured when getting the xml")
             self.logger.error("Error %d %s" % (e.args[0], e.args[1]))
             raise XmlError()
@@ -117,19 +130,23 @@ class WundergroundFetcher:
                 data = self.parse_xml(xml)
                 self.store_data(s, data)
             except Exception, e:
-                print e
+                self.logger.error(e)
                 continue #Try the next station
 
 
     def parse_xml(self, xml):
         data = WundergroundNoaaData()
-        time =  datetime.datetime.strptime(xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
-                "%a, %d %b %Y %H:%M:%S %Z")
+        time =  datetime.datetime.strptime(
+            xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
+            "%a, %d %b %Y %H:%M:%S %Z")
         #description = xml.xpathEval('//current_observation/weather')[0].content
         temperature = xml.xpathEval('//current_observation/temp_c')[0].content
-        humidity = xml.xpathEval('//current_observation/relative_humidity')[0].content
-        wind_direction = xml.xpathEval('//current_observation/wind_degrees')[0].content
-        wind_speed =  xml.xpathEval('//current_observation/wind_mph')[0].content
+        humidity = xml.xpathEval(
+            '//current_observation/relative_humidity')[0].content
+        wind_direction = xml.xpathEval(
+            '//current_observation/wind_degrees')[0].content
+        wind_speed =  xml.xpathEval(
+            '//current_observation/wind_mph')[0].content
         #wind_gust_speed = xml.xpathEval('//current_observation/wind_gust_mph')[0].content
         pressure = xml.xpathEval('//current_observation/pressure_mb')[0].content
         dewpoint = xml.xpathEval('//current_observation/dewpoint_c')[0].content
@@ -159,7 +176,7 @@ class WundergroundFetcher:
             data.wind_direction = wind_direction
             self.logger.debug("Wind direction = %s" % wind_direction)
         else:
-            self.logger.error("Wind dir is not a number: %s" % wind_dirction)
+            self.logger.error("Wind dir is not a number: %s" % wind_direction)
         if is_number(wind_speed):
             data.wind_speed = wind_speed
             self.logger.debug("Wind speed = %s" % wind_speed)
@@ -194,50 +211,55 @@ class WundergroundFetcher:
     def store_data(self, location_id, data):
         cursor = self.db.cursor()
         if data.temperature is not None:
-            cursor.execute("""INSERT IGNORE INTO temperature_readings (device, timestamp, value) VALUES (%s, %s, %s)""",
+            cursor.execute(
+                "INSERT IGNORE INTO temperature_readings (device, timestamp, value) VALUES (%s, %s, %s)",
                 (location_id, data.time, data.temperature))
         if data.humidity is not None:
-            cursor.execute("INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
+            cursor.execute(
+                "INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
                 (location_id, data.time, data.humidity))
         if data.wind_direction is not None and data.wind_speed is not None:
-            cursor.execute("INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
+            cursor.execute(
+                "INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
                 (location_id, data.time, data.wind_direction, data.wind_speed))
         if data.pressure is not None:
-            cursor.execute("INSERT IGNORE INTO pressure_readings (device, timestamp,value) VALUES (%s, %s, %s)",
+            cursor.execute(
+                "INSERT IGNORE INTO pressure_readings (device, timestamp,value) VALUES (%s, %s, %s)",
                 (location_id, data.time, data.pressure))
         if data.dewpoint is not None:
-            cursor.execute("INSERT IGNORE INTO dewpoint_readings (device, timestamp,value) VALUES (%s, %s, %s)",
+            cursor.execute(
+                "INSERT IGNORE INTO dewpoint_readings (device, timestamp,value) VALUES (%s, %s, %s)",
                 (location_id, data.time, data.dewpoint))
         cursor.close()
         self.db.commit()
         self.logger.debug("Data saved for station %s" % location_id)
 
 if __name__ == "__main__":
-    log_level = LOG_LEVEL
-    parser = OptionParser()
-    group = OptionGroup(parser, "Verbosity Options",
+    LOG_LEVEL = DEFAULT_LOG_LEVEL
+    PARSER = OptionParser()
+    GROUP = OptionGroup(PARSER, "Verbosity Options",
         "Options to change the level of output")
-    group.add_option("-q", "--quiet", action="store_true",
+    GROUP.add_option("-q", "--quiet", action="store_true",
          dest="quiet", default=False,
     help="Supress all but critical errors")
-    group.add_option("-v", "--verbose", action="store_true",
+    GROUP.add_option("-v", "--verbose", action="store_true",
         dest="verbose", default=False,
         help="Print all information available")
-    parser.add_option_group(group)
-    parser.add_option("-c", "--config", action="store",
+    PARSER.add_option_group(GROUP)
+    PARSER.add_option("-c", "--config", action="store",
     type="string", dest="config_file",
     help="Config file containing database credentials")
-    (options, args) = parser.parse_args()
-    if options.quiet:
-        log_level = logging.CRITICAL
-    elif options.verbose:
-        log_level = logging.DEBUG
-    if options.config_file is None:
-        config = DEFAULT_CONFIG
+    (OPTIONS, ARGS) = PARSER.parse_args()
+    if OPTIONS.quiet:
+        LOG_LEVEL = logging.CRITICAL
+    elif OPTIONS.verbose:
+        LOG_LEVEL = logging.DEBUG
+    if OPTIONS.config_file is None:
+        CONFIG = DEFAULT_CONFIG
     else:
-        config = options.config_file
-    w = WundergroundFetcher(config, log_level)
-    w.fetch_all_stations()
+        CONFIG = OPTIONS.config_file
+    FETCHER = WundergroundFetcher(CONFIG, LOG_LEVEL)
+    FETCHER.fetch_all_stations()
 
 
 
