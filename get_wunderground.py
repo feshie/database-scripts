@@ -213,6 +213,7 @@ class WundergroundFetcher:
         self.logger.debug("Data saved for station %s" % location_id)
 
 if __name__ == "__main__":
+    log_level = LOG_LEVEL
     parser = OptionParser()
     group = OptionGroup(parser, "Verbosity Options",
         "Options to change the level of output")
