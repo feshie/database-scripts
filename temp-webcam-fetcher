@@ -1,0 +1,8 @@
+#!/bin/bash
+#A hacky script to download the images to build up a test set for OCR
+
+epoch=`date +%s`
+cd /home/mountainsensing/www/feshie/webcams/temp
+wget -q www.winterhighland.info/cams/cairngorm-mountain/lady@2.jpeg -O lady-${epoch}.jpg
+wget -q http://www.winterhighland.info/cams/cairngorm-mountain/morlich.jpeg -O morlich${epoch}.jpg
+wget -q http://www.winterhighland.info/cams/aviemore/aviemore@2.jpeg -O aviemore-${epoch}.jpg
