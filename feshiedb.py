@@ -30,7 +30,16 @@ class FeshieDb:
             self.logger.critical("Unable to connect to db %s on %s as user %s" %
                 (database, host, user))
             self.logger.critical(e)
-            raise FeshieDbError(e.msg)
+            raise FeshieDbError(str(e))
+
+    def connected(self):
+        return self.db is not None
+
+    def get_wunderground_stations(self):
+        self.db.query("SELECT id FROM devices WHERE type = 1")
+        result = self.db.store_result()
+        rows = result.fetch_row(0)
+        return rows
 
     def save_temperature(self, device, timestamp, value):
         if self.db is None:
@@ -42,6 +51,7 @@ class FeshieDb:
                 (device, timestamp,value))
             cursor.close()
             self.db.commit()
+            self.logger.debug("Temperature stored")
 
     def save_humidity(self, device, timestamp, value):
         if self.db is None:

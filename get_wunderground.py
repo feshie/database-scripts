@@ -71,27 +71,10 @@ class WundergroundFetcher:
         self.logger = logging.getLogger("WundergroundFetcher")
         self.logger.setLevel(logging_level)
         self.logger.debug("Loading database config")
-        self.db = self.__dbconnect(feshiedb.FeshieDb(config_file))
-        if self.db is None:
+        self.db = feshiedb.FeshieDb(config_file, logging_level)
+        if not self.db.connected():
+            self.logger.critical("No database connection")
             exit(1)
-
-
-    def __dbconnect(self, db_config):
-        host = db_config.server
-        user = db_config.user
-        password = db_config.password
-        database = db_config.database
-        try:
-            db = MySQLdb.connect(host = host, user = user,
-                passwd = password, db = database)
-            self.logger.info("Connected to database %s on %s" %(database, host))
-            return db
-        except MySQLdb.Error, e:
-            self.logger.critical("Unable to connect to db %s on %s as user %s" %
-                (database, host, user))
-            self.logger.critical(e)
-            return None
-
 
     def fetch_xml(self, station_id):
         try:
@@ -106,9 +89,7 @@ class WundergroundFetcher:
 
 
     def get_stations(self):
-        self.db.query("SELECT id FROM devices WHERE type = 1")
-        result = self.db.store_result()
-        rows = result.fetch_row(0)
+        rows = self.db.get_wunderground_stations()
         clean = []
         for row in rows:
             id = row[0]
@@ -139,7 +120,6 @@ class WundergroundFetcher:
         time =  datetime.datetime.strptime(
             xml.xpathEval('//current_observation/observation_time_rfc822')[0].content, 
             "%a, %d %b %Y %H:%M:%S %Z")
-        #description = xml.xpathEval('//current_observation/weather')[0].content
         temperature = xml.xpathEval('//current_observation/temp_c')[0].content
         humidity = xml.xpathEval(
             '//current_observation/relative_humidity')[0].content
@@ -147,20 +127,10 @@ class WundergroundFetcher:
             '//current_observation/wind_degrees')[0].content
         wind_speed =  xml.xpathEval(
             '//current_observation/wind_mph')[0].content
-        #wind_gust_speed = xml.xpathEval('//current_observation/wind_gust_mph')[0].content
         pressure = xml.xpathEval('//current_observation/pressure_mb')[0].content
         dewpoint = xml.xpathEval('//current_observation/dewpoint_c')[0].content
-        #heat_index =   xml.xpathEval('//current_observation/heat_index_c')[0].content
-        #windchill = xml.xpathEval('//current_observation/windchill_c')[0].content
-        #solar_radiation = xml.xpathEval('//current_observation/solar_radiation')[0].content
-        #uv = xml.xpathEval('//current_observation/UV')[0].content
-        #precipitation_1hr = xml.xpathEval('//current_observation/precip_1hr_metric')[0].content
-        #precipitation_day = xml.xpathEval('//current_observation/precip_today_metric')[0].content
             
         data.time = time
-
-        #if description.replace(" ","").isalpha():
-        #    data.description = description
         if is_number(temperature):
             data.temperature = temperature
             self.logger.debug("Temperature = %s" % temperature)
@@ -182,8 +152,6 @@ class WundergroundFetcher:
             self.logger.debug("Wind speed = %s" % wind_speed)
         else:
             self.logger.error("Wind speed in not a number: %s" % wind_speed)
-        #if is_number(wind_gust_speed):
-        #    data.wind_gust_speed = wind_gust_speed
         if is_number(pressure):
             data.pressure = pressure
             self.logger.debug("Pressue = %s" % pressure)
@@ -194,44 +162,19 @@ class WundergroundFetcher:
             self.logger.debug("Dewpoint = %s" % dewpoint)
         else:
             self.logger.error("Dewpoint is not a number: %s" % dewpoint)
-        #if is_number(heat_index):
-        #    data.heat_index = heat_index
-        #if is_number(windchill):
-        #    data.windchill = windchill
-        #if is_number(solar_radiation):
-        #    data.solar_radiation = solar_radiation
-        #if is_number(uv):
-        #    data.uv =uv
-        #if is_number(precipitation_1hr):
-        #    data.precipitation_1hr = precipitation_1hr
-        #if is_number(precipitation_day):
-        #    data.precipitation_day = precipitation_day
         return data
     
     def store_data(self, location_id, data):
-        cursor = self.db.cursor()
         if data.temperature is not None:
-            cursor.execute(
-                "INSERT IGNORE INTO temperature_readings (device, timestamp, value) VALUES (%s, %s, %s)",
-                (location_id, data.time, data.temperature))
+            self.db.save_temperature(location_id, data.time, data.temperature) 
         if data.humidity is not None:
-            cursor.execute(
-                "INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
-                (location_id, data.time, data.humidity))
+                self.db.save_humidity(location_id, data.time, data.humidity)
         if data.wind_direction is not None and data.wind_speed is not None:
-            cursor.execute(
-                "INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
-                (location_id, data.time, data.wind_direction, data.wind_speed))
+                self.db.save_wind(location_id, data.time, data.wind_direction, data.wind_speed)
         if data.pressure is not None:
-            cursor.execute(
-                "INSERT IGNORE INTO pressure_readings (device, timestamp,value) VALUES (%s, %s, %s)",
-                (location_id, data.time, data.pressure))
+                self.db.save_pressure(location_id, data.time, data.pressure)
         if data.dewpoint is not None:
-            cursor.execute(
-                "INSERT IGNORE INTO dewpoint_readings (device, timestamp,value) VALUES (%s, %s, %s)",
-                (location_id, data.time, data.dewpoint))
-        cursor.close()
-        self.db.commit()
+                self.db.save_dewpoint(location_id, data.time, data.dewpoint)
         self.logger.debug("Data saved for station %s" % location_id)
 
 if __name__ == "__main__":
