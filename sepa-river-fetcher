@@ -2,44 +2,94 @@
 from bs4 import BeautifulSoup
 from urllib2 import urlopen
 from datetime import datetime
+from optparse import OptionParser, OptionGroup
+import logging
 
+import feshiedb
+
+# Only need one station at the moment so can b e hardcoded - done is such a way
+# as to make conversion if needed easier
 URL = "http://www.sepa.org.uk/water/river_levels/river_level_data.aspx?sd=t&lc=234217"
+LOCATION_ID = "Feshie Bridge"
 
-def get_page(url):
-    return urlopen(url).read()
+DEFAULT_LOG_LEVEL = logging.ERROR
+DEFAULT_CONFIG = "db.ini"
+class sepa_riverdepth_fetcher:
 
-def get_csv_link(page):
-    soup = BeautifulSoup(page)
-    csv = None
-    for link in soup.find_all('a'):
-        href = link.get("href")
-        if("csv" in href):
-             return href
-    return None
+    def __init__(self, config_file, logging_level):
+        logging.basicConfig()
+        self.logger = logging.getLogger("SepaFetcher")
+        self.logger.setLevel(logging_level)
+        self.logger.debug("Loading database config")
+        self.db = feshiedb.FeshieDb(config_file, logging_level)
+        if not self.db.connected():
+            self.logger.critical("No database connection")
+            exit(1)
 
-def process_csv(CSV)
-    data = CSV.split("\r\n")
-    for line in data:
-        s = line.split(",")
-        if len(s)  == 2: #Make sure it contains the right amount of data
-            depth = s[1]
-            time = datetime.strptime(s[0], "%d/%m/%Y %H:%M")
-            db_insert(time, depth)
+    def fetch_river_depth(self, url):
+        self.logger.debug("Getting data from %s", url)
+        page = self.get_page(url)
+        csv_link = self.get_csv_link(page)
+        if csv_link is not None:
+            self.logger.debug("Downloading CSV from %s", csv_link)
+            csv = self.get_page(csv_link)
+            if csv is not None:
+                self.process_csv(LOCATION_ID, csv)
+            else:
+                self.logger.error("No CSV downloaded")
+        else:
+            self.logger.error("No CSV link found")
 
-def connet_db():
-    pass
+    def get_page(self, url):
+        return urlopen(url).read()
 
-def disconnect_db():
-    pass
+    def get_csv_link(self, page):
+        soup = BeautifulSoup(page)
+        csv = None
+        for link in soup.find_all('a'):
+            href = link.get("href")
+            if("csv" in href):
+                 return href
+        return None
 
-def db_insert(time, value):
-    pass
+    def process_csv(self, location_id, csv):
+        data = csv.split("\r\n")
+        self.logger.debug("Number of lines: %d", len(data))
+        for line in data:
+            s = line.split(",")
+            if len(s)  == 2: #Make sure it contains the right amount of data
+                depth = s[1]
+                time = datetime.strptime(s[0], "%d/%m/%Y %H:%M")
+                self.logger.info("Data parsed: %s = %s m" % (str(time), depth))
+                self.db.save_riverdepth(location_id, time, depth)
+
+
+
 
 
 if __name__ == "__main__":
-    PAGE = get_page(URL)
-    CSV_LINK = get_csv_link(PAGE)
-    if CSV_LINK is not None:
-        CSV = get_page(CSV_LINK)
-        if CSV is not None:
-            process_csv(CSV)
+    LOG_LEVEL = DEFAULT_LOG_LEVEL
+    PARSER = OptionParser()
+    GROUP = OptionGroup(PARSER, "Verbosity Options",
+        "Options to change the level of output")
+    GROUP.add_option("-q", "--quiet", action="store_true",
+         dest="quiet", default=False,
+    help="Supress all but critical errors")
+    GROUP.add_option("-v", "--verbose", action="store_true",
+        dest="verbose", default=False,
+        help="Print all information available")
+    PARSER.add_option_group(GROUP)
+    PARSER.add_option("-c", "--config", action="store",
+    type="string", dest="config_file",
+    help="Config file containing database credentials")
+    (OPTIONS, ARGS) = PARSER.parse_args()
+    if OPTIONS.quiet:
+        LOG_LEVEL = logging.CRITICAL
+    elif OPTIONS.verbose:
+        LOG_LEVEL = logging.DEBUG
+    if OPTIONS.config_file is None:
+        CONFIG = DEFAULT_CONFIG
+    else:
+        CONFIG = OPTIONS.config_file
+    SEPA = sepa_riverdepth_fetcher(CONFIG, LOG_LEVEL)
+    SEPA.fetch_river_depth(URL)
