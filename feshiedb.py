@@ -41,6 +41,14 @@ class FeshieDb:
         rows = result.fetch_row(0)
         return rows
 
+    def get_latest_unprocessed(self):
+        if not self.connected():
+            raise FeshieDbError() 
+        self.db.query("SELECT * FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
+        return self.db.store_result().fetch_row(0)
+        
+        
+
     def save_temperature(self, device, timestamp, value):
         if self.db is None:
             raise FeshieDbError()
@@ -108,7 +116,6 @@ class FeshieDb:
             cursor.execute(cmd)
             cursor.close()
             self.db.commit()
-
 
 
 class FeshieDbConfig:
