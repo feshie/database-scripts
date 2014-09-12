@@ -1,3 +1,0 @@
-[submodule "protocol-buffers"]
-	path = protocol_buffers
-	url = https://github.com/feshie/protocol-buffers.git
