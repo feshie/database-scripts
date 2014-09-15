@@ -45,7 +45,8 @@ class FeshieDb:
         if not self.connected():
             raise FeshieDbError() 
         self.db.query("SELECT * FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
-        return self.db.store_result().fetch_row(0)
+        raw =  self.db.store_result().fetch_row()[0]
+        return RawReading(raw[1], raw[2], raw[3], bool(raw[4]))
         
         
 
@@ -135,6 +136,14 @@ class FeshieDbConfig:
             self.password = config["pass"]
         except KeyError:
             raise ConfigError("Invalid config File")    
+
+
+class RawReading:
+    def __init__(self, node, recieved_time, data, processed = False):
+        self.node = node
+        self.recieved_time = recieved_time
+        self.data = data
+        self.processed = processed
 
 class ConfigError(Exception):
     """
