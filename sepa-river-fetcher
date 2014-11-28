@@ -9,7 +9,7 @@ import feshiedb
 
 # Only need one station at the moment so can b e hardcoded - done is such a way
 # as to make conversion if needed easier
-URL = "http://www.sepa.org.uk/water/river_levels/river_level_data.aspx?sd=t&lc=234217"
+URL = "http://apps.sepa.org.uk/waterlevels/default.aspx?sd=t&lc=234217"
 LOCATION_ID = "Feshie Bridge"
 
 DEFAULT_LOG_LEVEL = logging.ERROR
