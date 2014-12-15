@@ -5,7 +5,7 @@ import logging
 from optparse import OptionParser, OptionGroup
 
 DEFAULT_LOG_LEVEL = logging.ERROR
-DEFAULT_CONFIG = "db.ini"
+DEFAULT_CONFIG = "/home/pjb/database-scripts/db.ini"
 
 WARN_THRESHOLD = 1080
 CRITICAL_THRESHOLD = 1440
@@ -41,15 +41,15 @@ if __name__ == "__main__":
     DIFF = -1
     DIFF = DB.get_sepa_difference()
     if DIFF > CRITICAL_THRESHOLD:
-        print("CRITICAL: No data recived for more than %d minutes" %
+        print("CRITICAL: No data for more than %d minutes" %
             CRITICAL_THRESHOLD)
         exit(2)
     elif DIFF > WARN_THRESHOLD:
-        print("WARNING: No data recieved for more than %d minutes" %
+        print("WARNING: No data for more than %d minutes" %
             WARN_THRESHOLD)
         exit(1)
     elif DIFF >= 0:
-        print("OK: Data recieved %d minutes ago" % DIFF)
+        print("OK: Latest data is %d minutes old" % DIFF)
         exit(0)
     else:
         print("UNKNOWN: Unable to get difference")
