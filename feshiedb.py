@@ -49,6 +49,13 @@ class FeshieDb:
         return RawReading(raw[1], raw[2], raw[3], bool(raw[4]))
         
         
+    def get_sepa_difference(self):
+        if not self.connected():
+            raise FeshieDbError() 
+        self.db.query("SELECT * FROM sepa_latest_difference;");
+        raw =  self.db.store_result().fetch_row()[0]
+        return raw[0]
+
 
     def save_temperature(self, device, timestamp, value):
         if self.db is None:
