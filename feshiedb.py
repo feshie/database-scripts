@@ -56,6 +56,12 @@ class FeshieDb:
         raw =  self.db.store_result().fetch_row()[0]
         return raw[0]
 
+    def get_wunderground_difference(self):
+        if not self.connected():
+            raise FeshieDbError() 
+        self.db.query("SELECT * FROM wunderground_latest_difference;");
+        raw =  self.db.store_result().fetch_row()[0]
+        return raw[0]
 
     def save_temperature(self, device, timestamp, value):
         if self.db is None:
