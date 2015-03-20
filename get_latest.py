@@ -6,6 +6,7 @@ import protocol_buffers.readings_pb2 as readings
 from feshie_reading import printReading
 from optparse import OptionParser, OptionGroup
 from google.protobuf.message import DecodeError
+from binascii import unhexlify as unhex
 
 DEFAULT_LOG_LEVEL = logging.ERROR
 DEFAULT_CONFIG = "db.ini"
@@ -14,16 +15,17 @@ def unpacklatest(DB_CONFIG, LOG_LEVEL):
     logger = logging.getLogger("Latest unpacker")
     logger.setLevel(LOG_LEVEL)
     DB = FeshieDb(DB_CONFIG)
-    RAW = DB.get_latest_unprocessed()
+    RAW = DB.get_latest_unprocessed(True)
     SAMPLE = readings.Sample()
     print("node: %s" % RAW.node)
     print("Recieved time: %s" % RAW.recieved_time)
     print("Processed: %s" % RAW.processed)
-    try:
-        SAMPLE.ParseFromString(RAW.data)
-    except DecodeError:
-        print("Unable to decode protocol buffer")
-        return
+    print("Raw data:%s" % RAW.data)
+    #try:
+    SAMPLE.ParseFromString(unhex(RAW.data[2:]))
+    #except DecodeError:
+     #   print("Unable to decode protocol buffer")
+      #  return
     printReading(SAMPLE)     
 
 

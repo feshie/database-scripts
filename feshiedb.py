@@ -6,6 +6,7 @@
 from configobj import ConfigObj
 import MySQLdb
 import logging
+from datetime import datetime
 class FeshieDb:
 
     def __init__(self, config_file, logging_level = logging.ERROR):
@@ -41,12 +42,15 @@ class FeshieDb:
         rows = result.fetch_row(0)
         return rows
 
-    def get_latest_unprocessed(self):
+    def get_latest_unprocessed(self, test=False):
         if not self.connected():
-            raise FeshieDbError() 
-        self.db.query("SELECT * FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
+            raise FeshieDbError()
+        if test:
+            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `test_unprocessed_data` WHERE id = (SELECT MAX(id) from `test_unprocessed_data`);")
+        else:
+            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
         raw =  self.db.store_result().fetch_row()[0]
-        return RawReading(raw[1], raw[2], raw[3], bool(raw[4]))
+        return RawReading(raw[0], raw[1], raw[2], bool(raw[3]))
         
         
     def get_sepa_difference(self):
