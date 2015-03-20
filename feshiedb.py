@@ -42,29 +42,25 @@ class FeshieDb:
         rows = result.fetch_row(0)
         return rows
 
-    def get_latest_unprocessed(self, test=False):
+    def get_latest_unprocessed(self):
         if not self.connected():
             raise FeshieDbError()
-        if test:
-            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `test_unprocessed_data` WHERE id = (SELECT MAX(id) from `test_unprocessed_data`);")
-        else:
-            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
+         self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
         raw =  self.db.store_result().fetch_row()[0]
         return RawReading(raw[0], raw[1], raw[2], bool(raw[3]))
 
-    def get_all_unprocessed(self, test=False):
+    def get_all_unprocessed(self):
         if not self.connected():
             raise FeshieDbError()
-        if test:
-            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `test_unprocessed_data` WHERE unpacked = 0;")
-        else:
-            self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE unpacked = 0;")
+
+        self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE unpacked = 0;")
         raw =  self.db.store_result().fetch_row(maxrows=0)
         data = []
         for i in raw:
             data.append(RawReading(i[0], i[1], i[2], bool(i[3])))
         return data
         
+
         
     def get_sepa_difference(self):
         if not self.connected():

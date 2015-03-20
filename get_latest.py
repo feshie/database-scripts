@@ -15,7 +15,7 @@ def unpacklatest(DB_CONFIG, LOG_LEVEL):
     logger = logging.getLogger("Latest unpacker")
     logger.setLevel(LOG_LEVEL)
     DB = FeshieDb(DB_CONFIG)
-    RAW = DB.get_latest_unprocessed(True)
+    RAW = DB.get_latest_unprocessed()
     SAMPLE = readings.Sample()
     print("node: %s" % RAW.node)
     print("Recieved time: %s" % RAW.recieved_time)
