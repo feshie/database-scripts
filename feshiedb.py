@@ -45,7 +45,7 @@ class FeshieDb:
     def get_latest_unprocessed(self):
         if not self.connected():
             raise FeshieDbError()
-         self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
+        self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
         raw =  self.db.store_result().fetch_row()[0]
         return RawReading(raw[0], raw[1], raw[2], bool(raw[3]))
 
