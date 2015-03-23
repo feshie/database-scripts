@@ -64,10 +64,7 @@ class FeshieDb:
         if not self.connected():
             raise FeshieDbError()
         cursor = self.db.cursor()
-        print "UPDATE 'unprocessed_data' SET unpacked = 1 WHERE device_id = %s AND timestamp = '%s';" % (device, timestamp)
-        cursor.execute(
-            "UPDATE 'unprocessed_data' SET unpacked = 1 WHERE id = %s;",
-            (device, id))
+        cursor.execute("UPDATE unprocessed_data SET unpacked = 1 WHERE id = %s;", id)
         cursor.close()
         self.db.commit()
         self.logger.debug("Marked %s as processed" %(id))
