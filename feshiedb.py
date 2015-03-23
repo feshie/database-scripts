@@ -45,22 +45,32 @@ class FeshieDb:
     def get_latest_unprocessed(self):
         if not self.connected():
             raise FeshieDbError()
-        self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
+        self.db.query("SELECT id, device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
         raw =  self.db.store_result().fetch_row()[0]
-        return RawReading(raw[0], raw[1], raw[2], bool(raw[3]))
+        return RawReading(raw[0], raw[1], raw[2], raw[3], bool(raw[4]))
 
     def get_all_unprocessed(self):
         if not self.connected():
             raise FeshieDbError()
 
-        self.db.query("SELECT device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE unpacked = 0;")
+        self.db.query("SELECT id, device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE unpacked = 0;")
         raw =  self.db.store_result().fetch_row(maxrows=0)
         data = []
         for i in raw:
-            data.append(RawReading(i[0], i[1], i[2], bool(i[3])))
+            data.append(RawReading(i[0], i[1], i[2], i[3], bool(i[4])))
         return data
         
-
+    def mark_processed(self, id):
+        if not self.connected():
+            raise FeshieDbError()
+        cursor = self.db.cursor()
+        print "UPDATE 'unprocessed_data' SET unpacked = 1 WHERE device_id = %s AND timestamp = '%s';" % (device, timestamp)
+        cursor.execute(
+            "UPDATE 'unprocessed_data' SET unpacked = 1 WHERE id = %s;",
+            (device, id))
+        cursor.close()
+        self.db.commit()
+        self.logger.debug("Marked %s as processed" %(id))
         
     def get_sepa_difference(self):
         if not self.connected():
@@ -144,6 +154,44 @@ class FeshieDb:
             cursor.close()
             self.db.commit()
 
+    def save_accelerometer(self, device, timestamp, x, y, z):
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO accelerometer_readings (device, timestamp,x, y , z) VALUES ('%s', '%s', %s, %s, %s)",
+                 (device, str(timestamp), x, y, z))
+            cursor.close()
+            self.db.commit()
+        except Exception as e:
+            self.logger.error(e)
+
+    def save_voltage(self, device, timestamp, value):
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO battery_readings (device, timestamp, value) VALUES ('%s', '%s', %s)",
+                 (device, str(timestamp),value))
+            cursor.close()
+            self.db.commit()
+        except Exception as e:
+            self.logger.error(e)
+
+    def save_adc(self, device, timestamp, adc_id, value):
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO adc_readings (device, timestamp, adc_id, value) VALUES ('%s', '%s', %s, %s)",
+                 (device, str(timestamp), adc_id, value))
+            cursor.close()
+            self.db.commit()
+        except Exception as e:
+            self.logger.error(e)
 
 class FeshieDbConfig:
     """
@@ -165,12 +213,15 @@ class FeshieDbConfig:
 
 
 class RawReading:
-    def __init__(self, node, recieved_time, data, processed = False):
+    def __init__(self, id, node, recieved_time, data, processed = False):
+        self.id = id
         self.node = node
         self.recieved_time = recieved_time
         self.data = data
         self.processed = processed
 
+    def __str__(self):
+        return "%s, %s, %s %d, %s" % (self.id, self.node, self.recieved_time, len(self.data), self.processed)
 class ConfigError(Exception):
     """
         An error for when something has gone wrong reading the config
