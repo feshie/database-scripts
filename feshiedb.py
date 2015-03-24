@@ -61,6 +61,7 @@ class FeshieDb:
         return data
         
     def mark_processed(self, id):
+        self.logger.debug("Marking processed")
         if not self.connected():
             raise FeshieDbError()
         cursor = self.db.cursor()
@@ -84,6 +85,7 @@ class FeshieDb:
         return raw[0]
 
     def save_temperature(self, device, timestamp, value):
+        self.logger.debug("Saving temperature")
         if self.db is None:
             raise FeshieDbError()
         else:
@@ -96,6 +98,7 @@ class FeshieDb:
             self.logger.debug("Temperature stored")
 
     def save_humidity(self, device, timestamp, value):
+        self.logger.debug("Saving humidity")
         if self.db is None:
             raise FeshieDbError()
         else:
@@ -107,6 +110,7 @@ class FeshieDb:
             self.db.commit()
 
     def save_wind(self, device, timestamp, direction, speed):
+        self.logger.debug("Saving wind")
         if self.db is None:
             raise FeshieDbError()
         else:
@@ -118,6 +122,7 @@ class FeshieDb:
             self.db.commit()
 
     def save_pressure(self, device, timestamp, value):
+        self.logger.debug("saving pressure_readings")
         if self.db is None:
             raise FeshieDbError()
         else:
@@ -130,6 +135,7 @@ class FeshieDb:
 
 
     def save_dewpoint(self, device, timestamp, value):
+        self.logger.debug("saving dewpoint")
         if self.db is None:
             raise FeshieDbError()
         else:
@@ -141,54 +147,140 @@ class FeshieDb:
             self.db.commit()
 
     def save_riverdepth(self, device, timestamp, value):
+        self.logger.debug("saving river depth")
         if self.db is None:
             raise FeshieDbError()
         else:
             cursor = self.db.cursor()
-            cmd = ("INSERT IGNORE INTO river_depth_readings (device, timestamp,value) VALUES ('%s', '%s', %s)"% (device, str(timestamp), value))
+            cmd = ("INSERT IGNORE INTO river_depth_readings (device, timestamp,value) VALUES (%s, %s, %s)"% (device, str(timestamp), value))
             self.logger.debug(cmd)
             cursor.execute(cmd)
             cursor.close()
             self.db.commit()
 
-    def save_accelerometer(self, device, timestamp, x, y, z):
+    def save_accelerometer(self, device_id, timestamp, x, y, z):
+        self.logger.debug("Saving accelerometer_readings")
         if self.db is None:
             raise FeshieDbError()
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO accelerometer_readings (device, timestamp,x, y , z) VALUES ('%s', '%s', %s, %s, %s)",
-                 (device, str(timestamp), x, y, z))
+                "INSERT INTO accelerometer_readings (device_id, timestamp,x, y , z) VALUES (%s, %s, %s, %s, %s)",
+                 (device_id, str(timestamp), x, y, z))
             cursor.close()
             self.db.commit()
         except Exception as e:
             self.logger.error(e)
 
-    def save_voltage(self, device, timestamp, value):
+    def save_voltage(self, device_id, timestamp, value):
+        self.logger.debug("Saving voltage")
         if self.db is None:
             raise FeshieDbError()
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO battery_readings (device, timestamp, value) VALUES ('%s', '%s', %s)",
-                 (device, str(timestamp),value))
+                "INSERT IGNORE INTO battery_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
+                 (device_id, timestamp, value))
             cursor.close()
             self.db.commit()
         except Exception as e:
             self.logger.error(e)
 
-    def save_adc(self, device, timestamp, adc_id, value):
+    def save_adc(self, device_id, timestamp, adc_id, value):
+        self.logger.debug("Saving adc")
         if self.db is None:
             raise FeshieDbError()
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO adc_readings (device, timestamp, adc_id, value) VALUES ('%s', '%s', %s, %s)",
-                 (device, str(timestamp), adc_id, value))
+                "INSERT INTO adc_readings (device_id, timestamp, adc_id, value) VALUES (%s, %s, %s, %s)",
+                 (device_id, str(timestamp), adc_id, value))
             cursor.close()
             self.db.commit()
         except Exception as e:
             self.logger.error(e)
+
+    def save_rain(self, device_id, timestamp,  value):
+        self.logger.debug("saving rain")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO rain_readings (device_id, timestamp,  value) VALUES (%s, %s, %s)",
+                 (device_id, str(timestamp),  value))
+            cursor.close()
+            self.db.commit()
+        except Exception as e:
+            self.logger.error(e)
+
+    def save_smart_reading(self, device_id, timestamp, data, processed=False):
+        self.logger.debug("saving smart reading")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO unprocessed_smart_data (device_id, timestamp, data, processed) VALUES (%s, %s, %s, %s)",
+                 (device_id, str(timestamp), data, int(processed)))
+            cursor.close()
+            self.db.commit()
+            self.logger.debug("%s, %s, %d, %s saved into unprocessed_smart_data" 
+                % (device_id, timestamp, len(data), processed))
+        except Exception as e:
+            self.logger.error(e)
+
+
+    def save_onewire_reading(self, device_id, timestamp, sensor_id, value):
+        self.logger.debug("saving one wire")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO onewire_readings (device_id, timestamp, sensor_id, value) VALUES (%s, %s, %s, %s)",
+                 (device_id, str(timestamp), sensor_id, value))
+            cursor.close()
+            self.db.commit()
+            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
+                % (device_id, timestamp, sensor_id, value))
+        except Exception as e:
+            self.logger.error(e)
+
+    def save_analog_smart_sensor_reading(self, device_id, timestamp, a1, a2, a3, a4):
+        self.logger.debug("saving analog smart sensor")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO analog_smart_sensor_readings (device_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s)",
+                 (device_id, str(timestamp), a1, a2, a3, a4))
+            cursor.close()
+            self.db.commit()
+            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
+                % (device_id, timestamp, sensor_id, value))
+        except Exception as e:
+            self.logger.error(e)
+
+    def save_chain_reading(self, device_id, timestamp, t1, pitch1, roll1, 
+            t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4):
+        self.logger.debug("saving chain")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO chain_readings (device_id, timestamp, t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4, VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (device_id, str(timestamp), t1, pitch1, roll1, 
+                t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4))
+            cursor.close()
+            self.db.commit()
+            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
+                % (device_id, timestamp, sensor_id, value))
+        except Exception as e:
+            self.logger.error(e)
+
 
 class FeshieDbConfig:
     """
