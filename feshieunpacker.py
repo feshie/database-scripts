@@ -24,7 +24,12 @@ def unpackall(config, log_level):
     for RECORD in UNPROCESSED_DATA:
         NODE = RECORD.node
         SAMPLE = readings.Sample()
-        SAMPLE.ParseFromString(unhex(RECORD.data[2:]))
+        try:
+            SAMPLE.ParseFromString(unhex(RECORD.data[2:]))
+        except DecodeError as e:
+            LOGGER.error("Unpacking %s gave error %s" 
+                % (RECORD.id, e))
+            continue
         TIMESTAMP = datetime.fromtimestamp(SAMPLE.time)
         DATABASE.save_temperature(NODE, TIMESTAMP, SAMPLE.temp)
         DATABASE.save_voltage(NODE, TIMESTAMP, SAMPLE.batt)
@@ -39,7 +44,7 @@ def unpackall(config, log_level):
         if SAMPLE.HasField("AVR"):
             DATABASE.save_smart_reading(NODE, TIMESTAMP, SAMPLE.AVR)
         DATABASE.mark_processed(RECORD.id)
-        LOGGER.info("Processed %s %s" %(NODE, TIMESTAMP))
+        LOGGER.info("Processed %d %s %s" %(RECORD.id, NODE, TIMESTAMP))
         
 
 

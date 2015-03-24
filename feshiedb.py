@@ -200,6 +200,7 @@ class FeshieDb:
         except Exception as e:
             self.logger.error(e)
 
+
     def save_rain(self, device_id, timestamp,  value):
         self.logger.debug("saving rain")
         if self.db is None:
