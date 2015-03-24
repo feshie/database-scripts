@@ -5,7 +5,7 @@ import logging
 from optparse import OptionParser, OptionGroup
 
 DEFAULT_LOG_LEVEL = logging.ERROR
-DEFAULT_CONFIG = "/home/pjb/database-scripts/db.ini"
+DEFAULT_CONFIG = "db.ini"
 
 WARN_THRESHOLD = 1080
 CRITICAL_THRESHOLD = 1440
