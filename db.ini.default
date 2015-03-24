@@ -1,4 +1,4 @@
-database=MyDatabase
-user=Username
-pass=123456
-server=localhost
+database=feshie
+user=feshie
+pass="lT#sN9Z!yf"
+server=env.ecs.soton.ac.uk

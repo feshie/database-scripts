@@ -6,10 +6,11 @@
 from configobj import ConfigObj
 import MySQLdb
 import logging
-from datetime import datetime
-class FeshieDb:
 
-    def __init__(self, config_file, logging_level = logging.ERROR):
+class FeshieDb(object):
+
+
+    def __init__(self, config_file, logging_level=logging.ERROR):
         self.logger = logging.getLogger("FeshieDb")
         self.logger.setLevel(logging_level)
         self.logger.debug("Loading database config")
@@ -23,13 +24,15 @@ class FeshieDb:
         password = self.db_config.password
         database = self.db_config.database
         try:
-            db = MySQLdb.connect(host = host, user = user,
-                passwd = password, db = database)
-            self.logger.info("Connected to database %s on %s" %(database, host))
+            db = MySQLdb.connect(
+                host=host, user=user,
+                passwd=password, db=database)
+            self.logger.info("Connected to database %s on %s", database, host)
             self.db = db
         except MySQLdb.Error, e:
-            self.logger.critical("Unable to connect to db %s on %s as user %s" %
-                (database, host, user))
+            self.logger.critical(
+                "Unable to connect to db %s on %s as user %s",
+                database, host, user)
             self.logger.critical(e)
             raise FeshieDbError(str(e))
 
@@ -46,7 +49,7 @@ class FeshieDb:
         if not self.connected():
             raise FeshieDbError()
         self.db.query("SELECT id, device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE id = (SELECT MAX(id) from `unprocessed_data`);")
-        raw =  self.db.store_result().fetch_row()[0]
+        raw = self.db.store_result().fetch_row()[0]
         return RawReading(raw[0], raw[1], raw[2], raw[3], bool(raw[4]))
 
     def get_all_unprocessed(self):
@@ -54,12 +57,12 @@ class FeshieDb:
             raise FeshieDbError()
 
         self.db.query("SELECT id, device_id, timestamp, HEX(data), unpacked FROM `unprocessed_data` WHERE unpacked = 0;")
-        raw =  self.db.store_result().fetch_row(maxrows=0)
+        raw = self.db.store_result().fetch_row(maxrows=0)
         data = []
         for i in raw:
             data.append(RawReading(i[0], i[1], i[2], i[3], bool(i[4])))
         return data
-        
+
     def mark_processed(self, id):
         self.logger.debug("Marking processed")
         if not self.connected():
@@ -68,21 +71,22 @@ class FeshieDb:
         cursor.execute("UPDATE unprocessed_data SET unpacked = 1 WHERE id = %s;", id)
         cursor.close()
         self.db.commit()
-        self.logger.debug("Marked %s as processed" %(id))
-        
+        self.logger.debug("Marked %s as processed", id)
+
     def get_sepa_difference(self):
         if not self.connected():
-            raise FeshieDbError() 
-        self.db.query("SELECT * FROM sepa_latest_difference;");
-        raw =  self.db.store_result().fetch_row()[0]
+            raise FeshieDbError()
+        self.db.query("SELECT * FROM sepa_latest_difference;")
+        raw = self.db.store_result().fetch_row()[0]
         return raw[0]
 
     def get_wunderground_difference(self):
         if not self.connected():
-            raise FeshieDbError() 
-        self.db.query("SELECT * FROM wunderground_latest_difference;");
-        raw =  self.db.store_result().fetch_row()[0]
+            raise FeshieDbError()
+        self.db.query("SELECT * FROM wunderground_latest_difference;")
+        raw = self.db.store_result().fetch_row()[0]
         return raw[0]
+
 
     def save_temperature(self, device, timestamp, value):
         self.logger.debug("Saving temperature")
@@ -92,7 +96,7 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT IGNORE INTO temperature_readings (device, timestamp,value) VALUES (%s, %s, %s)",
-                (device, timestamp,value))
+                (device, timestamp, value))
             cursor.close()
             self.db.commit()
             self.logger.debug("Temperature stored")
@@ -104,7 +108,7 @@ class FeshieDb:
         else:
             cursor = self.db.cursor()
             cursor.execute(
-                 "INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
+                "INSERT IGNORE INTO humidity_readings (device, timestamp, value) VALUES (%s, %s, %s)",
                 (device, timestamp, value))
             cursor.close()
             self.db.commit()
@@ -116,7 +120,7 @@ class FeshieDb:
         else:
             cursor = self.db.cursor()
             cursor.execute(
-                 "INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
+                "INSERT IGNORE INTO wind_readings (device, timestamp, direction, speed) VALUES (%s, %s, %s, %s)",
                 (device, timestamp, direction, speed))
             cursor.close()
             self.db.commit()
@@ -166,10 +170,10 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO accelerometer_readings (device_id, timestamp,x, y , z) VALUES (%s, %s, %s, %s, %s)",
-                 (device_id, str(timestamp), x, y, z))
+                (device_id, str(timestamp), x, y, z))
             cursor.close()
             self.db.commit()
-        except Exception as e:
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
     def save_voltage(self, device_id, timestamp, value):
@@ -179,11 +183,11 @@ class FeshieDb:
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT IGNORE INTO battery_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
-                 (device_id, timestamp, value))
+                "INSERT INTO battery_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
+                (device_id, timestamp, value))
             cursor.close()
             self.db.commit()
-        except Exception as e:
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
     def save_adc(self, device_id, timestamp, adc_id, value):
@@ -194,14 +198,14 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO adc_readings (device_id, timestamp, adc_id, value) VALUES (%s, %s, %s, %s)",
-                 (device_id, str(timestamp), adc_id, value))
+                (device_id, str(timestamp), adc_id, value))
             cursor.close()
             self.db.commit()
-        except Exception as e:
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
 
-    def save_rain(self, device_id, timestamp,  value):
+    def save_rain(self, device_id, timestamp, value):
         self.logger.debug("saving rain")
         if self.db is None:
             raise FeshieDbError()
@@ -209,10 +213,10 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO rain_readings (device_id, timestamp,  value) VALUES (%s, %s, %s)",
-                 (device_id, str(timestamp),  value))
+                (device_id, str(timestamp), value))
             cursor.close()
             self.db.commit()
-        except Exception as e:
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
     def save_smart_reading(self, device_id, timestamp, data, processed=False):
@@ -223,12 +227,13 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO unprocessed_smart_data (device_id, timestamp, data, processed) VALUES (%s, %s, %s, %s)",
-                 (device_id, str(timestamp), data, int(processed)))
+                (device_id, str(timestamp), data, int(processed)))
             cursor.close()
             self.db.commit()
-            self.logger.debug("%s, %s, %d, %s saved into unprocessed_smart_data" 
-                % (device_id, timestamp, len(data), processed))
-        except Exception as e:
+            self.logger.debug(
+                "%s, %s, %d, %s saved into unprocessed_smart_data",
+                device_id, timestamp, len(data), processed)
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
 
@@ -240,12 +245,13 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO onewire_readings (device_id, timestamp, sensor_id, value) VALUES (%s, %s, %s, %s)",
-                 (device_id, str(timestamp), sensor_id, value))
+                (device_id, str(timestamp), sensor_id, value))
             cursor.close()
             self.db.commit()
-            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
-                % (device_id, timestamp, sensor_id, value))
-        except Exception as e:
+            self.logger.debug(
+                "%s, %s, %d, %s saved into onewire_readings",
+                device_id, timestamp, sensor_id, value)
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
     def save_analog_smart_sensor_reading(self, device_id, timestamp, a1, a2, a3, a4):
@@ -256,15 +262,17 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO analog_smart_sensor_readings (device_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s)",
-                 (device_id, str(timestamp), a1, a2, a3, a4))
+                (device_id, str(timestamp), a1, a2, a3, a4))
             cursor.close()
             self.db.commit()
-            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
-                % (device_id, timestamp, sensor_id, value))
-        except Exception as e:
+            self.logger.debug(
+                "%s, %s, %d, %s saved into onewire_readings",
+                device_id, timestamp, sensor_id, value)
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
-    def save_chain_reading(self, device_id, timestamp, t1, pitch1, roll1, 
+    def save_chain_reading(
+            self, device_id, timestamp, t1, pitch1, roll1,
             t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4):
         self.logger.debug("saving chain")
         if self.db is None:
@@ -273,17 +281,17 @@ class FeshieDb:
             cursor = self.db.cursor()
             cursor.execute(
                 "INSERT INTO chain_readings (device_id, timestamp, t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4, VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (device_id, str(timestamp), t1, pitch1, roll1, 
-                t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4))
+                (device_id, str(timestamp), t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4))
             cursor.close()
             self.db.commit()
-            self.logger.debug("%s, %s, %d, %s saved into onewire_readings" 
-                % (device_id, timestamp, sensor_id, value))
-        except Exception as e:
+            self.logger.debug(
+                "%s, %s, %d, %s saved into onewire_readings",
+                device_id, timestamp, sensor_id, value)
+        except MySQLdb.Error as e:
             self.logger.error(e)
 
 
-class FeshieDbConfig:
+class FeshieDbConfig(object):
     """
         A class containing the connection information required to access the
         database
@@ -299,11 +307,12 @@ class FeshieDbConfig:
             self.user = config["user"]
             self.password = config["pass"]
         except KeyError:
-            raise ConfigError("Invalid config File")    
+            raise ConfigError("Invalid config File")
 
 
-class RawReading:
-    def __init__(self, id, node, recieved_time, data, processed = False):
+
+class RawReading(object):
+    def __init__(self, id, node, recieved_time, data, processed=False):
         self.id = id
         self.node = node
         self.recieved_time = recieved_time
@@ -312,6 +321,8 @@ class RawReading:
 
     def __str__(self):
         return "%s, %s, %s %d, %s" % (self.id, self.node, self.recieved_time, len(self.data), self.processed)
+
+
 class ConfigError(Exception):
     """
         An error for when something has gone wrong reading the config

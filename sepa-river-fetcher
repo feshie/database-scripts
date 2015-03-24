@@ -14,7 +14,7 @@ LOCATION_ID = "Feshie Bridge"
 
 DEFAULT_LOG_LEVEL = logging.ERROR
 DEFAULT_CONFIG = "db.ini"
-class sepa_riverdepth_fetcher:
+class sepa_riverdepth_fetcher(object):
 
     def __init__(self, config_file, logging_level):
         logging.basicConfig()
@@ -45,11 +45,10 @@ class sepa_riverdepth_fetcher:
 
     def get_csv_link(self, page):
         soup = BeautifulSoup(page)
-        csv = None
         for link in soup.find_all('a'):
             href = link.get("href")
-            if("csv" in href):
-                 return href
+            if "csv" in href:
+                return href
         return None
 
     def process_csv(self, location_id, csv):
@@ -57,10 +56,10 @@ class sepa_riverdepth_fetcher:
         self.logger.debug("Number of lines: %d", len(data))
         for line in data:
             s = line.split(",")
-            if len(s)  == 2: #Make sure it contains the right amount of data
+            if len(s) == 2: #Make sure it contains the right amount of data
                 depth = s[1]
                 time = datetime.strptime(s[0], "%d/%m/%Y %H:%M")
-                self.logger.info("Data parsed: %s = %s m" % (str(time), depth))
+                self.logger.info("Data parsed: %s = %s m", str(time), depth)
                 self.db.save_riverdepth(location_id, time, depth)
 
 
@@ -70,18 +69,22 @@ class sepa_riverdepth_fetcher:
 if __name__ == "__main__":
     LOG_LEVEL = DEFAULT_LOG_LEVEL
     PARSER = OptionParser()
-    GROUP = OptionGroup(PARSER, "Verbosity Options",
+    GROUP = OptionGroup(
+        PARSER, "Verbosity Options",
         "Options to change the level of output")
-    GROUP.add_option("-q", "--quiet", action="store_true",
-         dest="quiet", default=False,
-    help="Supress all but critical errors")
-    GROUP.add_option("-v", "--verbose", action="store_true",
+    GROUP.add_option(
+        "-q", "--quiet", action="store_true",
+        dest="quiet", default=False,
+        help="Supress all but critical errors")
+    GROUP.add_option(
+        "-v", "--verbose", action="store_true",
         dest="verbose", default=False,
         help="Print all information available")
     PARSER.add_option_group(GROUP)
-    PARSER.add_option("-c", "--config", action="store",
-    type="string", dest="config_file",
-    help="Config file containing database credentials")
+    PARSER.add_option(
+        "-c", "--config", action="store",
+        type="string", dest="config_file",
+        help="Config file containing database credentials")
     (OPTIONS, ARGS) = PARSER.parse_args()
     if OPTIONS.quiet:
         LOG_LEVEL = logging.CRITICAL
