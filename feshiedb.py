@@ -78,7 +78,7 @@ class FeshieDb(object):
         if not self.connected():
             raise FeshieDbError()
         cursor = self.db.cursor()
-        cursor.execute("UPDATE unprocessed_smart_data SET unpacked = 1 WHERE id = %s;", id)
+        cursor.execute("UPDATE unprocessed_smart_data SET processed = 1 WHERE id = %s;", id)
         cursor.close()
         self.db.commit()
         self.logger.debug("Marked %s as processed", id)

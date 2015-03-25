@@ -12,103 +12,108 @@ from google.protobuf.message import DecodeError
 
 DEFAULT_LOG_LEVEL = INFO
 DEFAULT_CONFIG = "db.ini"
-LOGGER = getLogger("Feshie unpacker")
-logging_basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-def unpackall(config, log_level):
-    DATABASE = FeshieDb(config, log_level)
-    UNPROCESSED_DATA = DATABASE.get_all_unprocessed()
-    NO_RECORDS = len(UNPROCESSED_DATA)
-    LOGGER.info("%d Records to process", NO_RECORDS)
-    for RECORD in UNPROCESSED_DATA:
-        NODE = RECORD.node
-        SAMPLE = readings.Sample()
+
+class FeshieUnpacker(object):
+
+    def __init__(self, config, log_level):
+        self.logger = getLogger("Feshie unpacker")
+        self.logger.setLevel(log_level)
+        logging_basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.database = FeshieDb(config, log_level)
+
+    def unpackall(self):
+        unprocessed_data = self.database.get_all_unprocessed()
+        no_records = len(unprocessed_data)
+        self.logger.info("%d Records to process", no_records)
+        for record in unprocessed_data:
+            node = record.node
+            sample = readings.Sample()
+            try:
+                sample.ParseFromString(unhex(record.data[2:]))
+            except DecodeError as e:
+                self.logger.error(
+                    "Unpacking  gave error %s",
+                    record.id, e)
+                self.database.mark_processed(record.id)
+                self.database.mark_corrupt(record.id)
+                continue
+            timestamp = datetime.fromtimestamp(sample.time)
+            self.database.save_temperature(node, timestamp, sample.temp)
+            self.database.save_voltage(node, timestamp, sample.batt)
+            self.database.save_accelerometer(
+                node, timestamp,
+                sample.accX, sample.accY, sample.accZ)
+            if sample.HasField("ADC1"):
+                self.database.save_adc(node, timestamp, 1, sample.ADC1)
+            if sample.HasField("ADC2"):
+                self.database.save_adc(node, timestamp, 2, sample.ADC2)
+            if sample.HasField("rain"):
+                self.database.save_rain(node, timestamp, sample.rain)
+            if sample.HasField("AVR"):
+                self.database.save_smart_reading(node, timestamp, sample.AVR)
+            self.database.mark_processed(record.id)
+            self.logger.info("Processed %d %s %s", record.id, node, timestamp)
+
+    def unpack_all_smart(self):
+        unprocessed_data = self.database.get_all_unprocessed_smart()
+        no_records = len(unprocessed_data)
+        self.logger.info("%d Smart Records to process", no_records)
+        for record in unprocessed_data:
+            device = record.device
+            timestamp = record.timestamp
+            if self.unpack_smart(device, timestamp, record.data) is None:
+                self.database.mark_smart_corrupt(record.id)
+            self.database.mark_smart_processed(record.id)
+            self.logger.info("Processed Smart data %d %s %s", record.id, device, timestamp)
+
+
+
+    def unpack_smart(self, device, timestamp, data):
+        self.logger.debug("Unpacked %d bytes of smart data", len(data) / 2) #It's hex so each digit is only a nibble
+        RS485 = rs485_message.Rs485()
         try:
-            SAMPLE.ParseFromString(unhex(RECORD.data[2:]))
+            RS485.ParseFromString(unhex(data))
         except DecodeError as e:
-            LOGGER.error(
-                "Unpacking  gave error %s",
-                RECORD.id, e)
-            DATABASE.mark_processed(RECORD.id)
-            DATABASE.mark_corrupt(RECORD.id)
-            continue
-        TIMESTAMP = datetime.fromtimestamp(SAMPLE.time)
-        DATABASE.save_temperature(NODE, TIMESTAMP, SAMPLE.temp)
-        DATABASE.save_voltage(NODE, TIMESTAMP, SAMPLE.batt)
-        DATABASE.save_accelerometer(
-            NODE, TIMESTAMP,
-            SAMPLE.accX, SAMPLE.accY, SAMPLE.accZ)
-        if SAMPLE.HasField("ADC1"):
-            DATABASE.save_adc(NODE, TIMESTAMP, 1, SAMPLE.ADC1)
-        if SAMPLE.HasField("ADC2"):
-            DATABASE.save_adc(NODE, TIMESTAMP, 2, SAMPLE.ADC2)
-        if SAMPLE.HasField("rain"):
-            DATABASE.save_rain(NODE, TIMESTAMP, SAMPLE.rain)
-        if SAMPLE.HasField("AVR"):
-            DATABASE.save_smart_reading(NODE, TIMESTAMP, SAMPLE.AVR)
-        DATABASE.mark_processed(RECORD.id)
-        LOGGER.info("Processed %d %s %s", RECORD.id, NODE, TIMESTAMP)
-
-def unpack_all_smart(DATABASE):
-    return
-    DATABASE.mark_smart_processed(R.id)
-    UNPROCESSED_DATA = DATABASE.get_all_unprocessed_smart()
-    NO_RECORDS = len(UNPROCESSED_DATA)
-    LOGGER.info("%d Smart Records to process", NO_RECORDS)
-    for RECORD in UNPROCESSED_DATA:
-        DEVICE = RECORD.node
-        TIMESTAMP = RECORD.timestamp
-        if unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA) is None:
-            DATABASE.mark_smart_corrupt(RECORD.id)
-        DATABASE.mark_smart_processed(RECORD.id)
-        LOGGER.info("Processed Smart data %d %s %s", RECORD.id, NODE, TIMESTAMP)
-
-
-
-def unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA):
-    LOGGER.debug("Unpacked %d bytes of smart data", len(DATA) / 2) #It's hex so each digit is only a nibble
-    RS485 = rs485_message.Rs485()
-    try:
-        RS485.ParseFromString(unhex(DATA))
-    except DecodeError as e:
-        LOGGER.error("Unpacking buffer gave error %s", e)
-        return None
-    if RS485.type == rs485_message.Rs485.DATA:
-        #this is the type we are expecting
-        if RS485.sensor == rs485_message.Rs485.OW:
-            LOGGER.debug("One wire data")
-            for S in RS485.ow:
-                SID = S.id
-                SV = S.value
-                DATABASE.save_onewire_reading(DEVICE, TIMESTAMP, SID, SV)
-                LOGGER.debug("Saved onewire reading to db %s, %s, %s", DEVICE, TIMESTAMP, SID)
-        elif RS485.sensor == rs485_message.Rs485.TA_CHAIN:
-            for C in RS485.tad:
-                LOGGER.debug("Chain data")
-                #DATABASE.save_chain_reading(DEVICE, TIMESTAMP)
-        elif RS485.sensor == rs485_message.Rs485.WP:
-            LOGGER.debug("WP data")
-            if len(RS485.ad) < 2:
-                LOGGER.error("Not enough data from waterpressure sensor")
-                return None
-            ADC1 = RS485.ad[0]
-            ADC2 = RS485.ad[1]
-            if len(RS485.ad) >=3:
-                ADC3 = RS485.ad[2]
-                if len(RS485.ad) >= 4:
-                    ADC4 = RS485.ad[3]
-                else:
-                    ADC4 = None
-            else:
-                ADC3 = None
-            DATABASE.save_analog_smart_sensor_reading(self, DEVICE, TIMESTAMP, ADC1, ADC2, ADC3, ADC4)
-            LOGGER.debug("Saved analog smart sensor value to db %s %s", DEVICE, TIMESTAMP)
-        else:
-            LOGGER.error("Unknown sensor type %d", RS485.sensor)
+            self.logger.error("Unpacking buffer gave error %s", e)
             return None
-    else:
-        LOGGER.error("Unexpected message type %d". RS485.type)
-        return None
+        if RS485.type == rs485_message.Rs485.DATA:
+            #this is the type we are expecting
+            if RS485.sensor == rs485_message.Rs485.OW:
+                self.logger.debug("One wire data")
+                for S in RS485.ow:
+                    SID = S.id
+                    SV = S.value
+                    self.database.save_onewire_reading(device, timestamp, SID, SV)
+                    self.logger.debug("Saved onewire reading to db %s, %s, %s", device, timestamp, SID)
+            elif RS485.sensor == rs485_message.Rs485.TA_CHAIN:
+                for C in RS485.tad:
+                    self.logger.debug("Chain data")
+                    #self.database.save_chain_reading(device, timestamp)
+            elif RS485.sensor == rs485_message.Rs485.WP:
+                self.logger.debug("WP data")
+                if len(RS485.ad) < 2:
+                    self.logger.error("Not enough data from waterpressure sensor")
+                    return None
+                ADC1 = RS485.ad[0]
+                ADC2 = RS485.ad[1]
+                if len(RS485.ad) >=3:
+                    ADC3 = RS485.ad[2]
+                    if len(RS485.ad) >= 4:
+                        ADC4 = RS485.ad[3]
+                    else:
+                        ADC4 = None
+                else:
+                    ADC3 = None
+                    ADC4 = None
+                self.database.save_analog_smart_sensor_reading(self, device, timestamp, ADC1, ADC2, ADC3, ADC4)
+                self.logger.debug("Saved analog smart sensor value to db %s %s", device, timestamp)
+            else:
+                self.logger.error("Unknown sensor type %d", RS485.sensor)
+                return None
+        else:
+            self.logger.error("Unexpected message type %d". RS485.type)
+            return None
 
 
 if __name__ == "__main__":
@@ -135,9 +140,10 @@ if __name__ == "__main__":
         LOG_LEVEL = CRITICAL
     elif OPTIONS.verbose:
         LOG_LEVEL = DEBUG
-    LOGGER.setLevel(LOG_LEVEL)
     if OPTIONS.config_file is None:
         CONFIG = DEFAULT_CONFIG
     else:
         CONFIG = OPTIONS.config_file
-    unpackall(CONFIG, LOG_LEVEL)
+    UNPACKER = FeshieUnpacker(CONFIG, LOG_LEVEL)
+    UNPACKER.unpackall()
+    UNPACKER.unpack_all_smart()
