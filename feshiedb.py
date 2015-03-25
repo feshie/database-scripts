@@ -63,6 +63,36 @@ class FeshieDb(object):
             data.append(RawReading(i[0], i[1], i[2], i[3], bool(i[4])))
         return data
 
+    def get_all_unprocessed_smart(self):
+        if not self.connected():
+            raise FeshieDbError()
+        self.db.query("SELECT id, device_id, timestamp, HEX(data), processed FROM `unprocessed_smart_data` WHERE processed = 0;")
+        raw = self.db.store_result().fetch_row(maxrows=0)
+        data = []
+        for i in raw:
+            data.append(RawSmartReading(i[0], i[1], i[2], i[3], bool(i[4])))
+        return data
+
+    def mark_smart_processed(self, id):
+        self.logger.debug("Marking smart data as processed")
+        if not self.connected():
+            raise FeshieDbError()
+        cursor = self.db.cursor()
+        cursor.execute("UPDATE unprocessed_smart_data SET unpacked = 1 WHERE id = %s;", id)
+        cursor.close()
+        self.db.commit()
+        self.logger.debug("Marked %s as processed", id)
+
+    def mark_smart_corrupt(self, id):
+        self.logger.debug("Marking smart data corrupt")
+        if not self.connected():
+            raise FeshieDbError()
+        cursor = self.db.cursor()
+        cursor.execute("UPDATE unprocessed_smart_data SET corrupt = 1 WHERE id = %s;", id)
+        cursor.close()
+        self.db.commit()
+        self.logger.debug("Marked %s as corrupt", id)
+
     def mark_processed(self, id):
         self.logger.debug("Marking processed")
         if not self.connected():
@@ -72,6 +102,16 @@ class FeshieDb(object):
         cursor.close()
         self.db.commit()
         self.logger.debug("Marked %s as processed", id)
+
+    def mark_corrupt(self, id):
+        self.logger.debug("Marking corrupt")
+        if not self.connected():
+            raise FeshieDbError()
+        cursor = self.db.cursor()
+        cursor.execute("UPDATE unprocessed_data SET corrupt = 1 WHERE id = %s;", id)
+        cursor.close()
+        self.db.commit()
+        self.logger.debug("Marked %s as corrupt", id)
 
     def get_sepa_difference(self):
         if not self.connected():
@@ -254,15 +294,15 @@ class FeshieDb(object):
         except MySQLdb.Error as e:
             self.logger.error(e)
 
-    def save_analog_smart_sensor_reading(self, device_id, timestamp, a1, a2, a3, a4):
+    def save_analog_smart_sensor_reading(self, device_id, avr_id, timestamp, a1, a2, a3, a4):
         self.logger.debug("saving analog smart sensor")
         if self.db is None:
             raise FeshieDbError()
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO analog_smart_sensor_readings (device_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s)",
-                (device_id, str(timestamp), a1, a2, a3, a4))
+                "INSERT INTO analog_smart_sensor_readings (device_id, avr_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (device_id, avr_id, str(timestamp), a1, a2, a3, a4))
             cursor.close()
             self.db.commit()
             self.logger.debug(
@@ -321,6 +361,17 @@ class RawReading(object):
 
     def __str__(self):
         return "%s, %s, %s %d, %s" % (self.id, self.node, self.recieved_time, len(self.data), self.processed)
+
+class RawSmartReading(object):
+    def __init__(self, id, device, timestamp, data, processed=False):
+        self.id = id
+        self.device = device
+        self.timestamp = timestamp
+        self.data = data
+        self.processed = processed
+
+    def __str__(self):
+        return "%s, %s, %s, %d, %s" % (self.id, self.device, self.timestamp, len(self.data)/2, self.processed)
 
 
 class ConfigError(Exception):

@@ -6,17 +6,16 @@ from binascii import unhexlify as unhex
 from datetime import datetime
 from feshiedb import FeshieDb
 import protocol_buffers.readings_pb2 as readings
+import protocol_buffers.rs485_message_pb2 as rs485_message
 from google.protobuf.message import DecodeError
 
 
 DEFAULT_LOG_LEVEL = INFO
 DEFAULT_CONFIG = "db.ini"
-
+LOGGER = getLogger("Feshie unpacker")
+logging_basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 def unpackall(config, log_level):
-    LOGGER = getLogger("Feshie unpacker")
-    LOGGER.setLevel(LOG_LEVEL)
-    logging_basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     DATABASE = FeshieDb(config, log_level)
     UNPROCESSED_DATA = DATABASE.get_all_unprocessed()
     NO_RECORDS = len(UNPROCESSED_DATA)
@@ -28,8 +27,10 @@ def unpackall(config, log_level):
             SAMPLE.ParseFromString(unhex(RECORD.data[2:]))
         except DecodeError as e:
             LOGGER.error(
-                "Unpacking %s gave error %s",
+                "Unpacking  gave error %s",
                 RECORD.id, e)
+            DATABASE.mark_processed(RECORD.id)
+            DATABASE.mark_corrupt(RECORD.id)
             continue
         TIMESTAMP = datetime.fromtimestamp(SAMPLE.time)
         DATABASE.save_temperature(NODE, TIMESTAMP, SAMPLE.temp)
@@ -48,6 +49,57 @@ def unpackall(config, log_level):
         DATABASE.mark_processed(RECORD.id)
         LOGGER.info("Processed %d %s %s", RECORD.id, NODE, TIMESTAMP)
 
+def unpack_all_smart(DATABASE):
+    return
+    DATABASE.mark_smart_processed(R.id)
+    if unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA) is None:
+        DATABASE.mark_smart_corrupt(R.id)
+
+
+def unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA):
+    LOGGER.debug("Unpacked %d bytes of smart data", len(DATA) / 2) #It's hex so each digit is only a nibble
+    RS485 = rs485_message.Rs485()
+    try:
+        RS485.ParseFromString(unhex(DATA))
+    except DecodeError as e:
+        LOGGER.error("Unpacking buffer gave error %s", e)
+        return None
+    if RS485.type == rs485_message.Rs485.DATA:
+        #this is the type we are expecting
+        if RS485.sensor == rs485_message.Rs485.OW:
+            LOGGER.debug("One wire data")
+            for S in RS485.ow:
+                SID = S.id
+                SV = S.value
+                DATABASE.save_onewire_reading(DEVICE, TIMESTAMP, SID, SV)
+                LOGGER.debug("Saved onewire reading to db %s, %s, %s", DEVICE, TIMESTAMP, SID)
+        elif RS485.sensor == rs485_message.Rs485.TA_CHAIN:
+            for C in RS485.tad:
+                LOGGER.debug("Chain data")
+                #DATABASE.save_chain_reading(DEVICE, TIMESTAMP)
+        elif RS485.sensor == rs485_message.Rs485.WP:
+            LOGGER.debug("WP data")
+            if len(RS485.ad) < 2:
+                LOGGER.error("Not enough data from waterpressure sensor")
+                return None
+            ADC1 = RS485.ad[0]
+            ADC2 = RS485.ad[1]
+            if len(RS485.ad) >=3:
+                ADC3 = RS485.ad[2]
+                if len(RS485.ad) >= 4:
+                    ADC4 = RS485.ad[3]
+                else:
+                    ADC4 = None
+            else:
+                ADC3 = None
+            DATABASE.save_analog_smart_sensor_reading(self, DEVICE, TIMESTAMP, ADC1, ADC2, ADC3, ADC4)
+            LOGGER.debug("Saved analog smart sensor value to db %s %s", DEVICE, TIMESTAMP)
+        else:
+            LOGGER.error("Unknown sensor type %d", RS485.sensor)
+            return None
+    else:
+        LOGGER.error("Unexpected message type %d". RS485.type)
+        return None
 
 
 if __name__ == "__main__":
@@ -74,6 +126,7 @@ if __name__ == "__main__":
         LOG_LEVEL = CRITICAL
     elif OPTIONS.verbose:
         LOG_LEVEL = DEBUG
+    LOGGER.setLevel(LOG_LEVEL)
     if OPTIONS.config_file is None:
         CONFIG = DEFAULT_CONFIG
     else:
