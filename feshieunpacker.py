@@ -52,8 +52,17 @@ def unpackall(config, log_level):
 def unpack_all_smart(DATABASE):
     return
     DATABASE.mark_smart_processed(R.id)
-    if unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA) is None:
-        DATABASE.mark_smart_corrupt(R.id)
+    UNPROCESSED_DATA = DATABASE.get_all_unprocessed_smart()
+    NO_RECORDS = len(UNPROCESSED_DATA)
+    LOGGER.info("%d Smart Records to process", NO_RECORDS)
+    for RECORD in UNPROCESSED_DATA:
+        DEVICE = RECORD.node
+        TIMESTAMP = RECORD.timestamp
+        if unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA) is None:
+            DATABASE.mark_smart_corrupt(RECORD.id)
+        DATABASE.mark_smart_processed(RECORD.id)
+        LOGGER.info("Processed Smart data %d %s %s", RECORD.id, NODE, TIMESTAMP)
+
 
 
 def unpack_smart(DATABASE, DEVICE, TIMESTAMP, DATA):
