@@ -294,20 +294,20 @@ class FeshieDb(object):
         except MySQLdb.Error as e:
             self.logger.error(e)
 
-    def save_analog_smart_sensor_reading(self, device_id, avr_id, timestamp, a1, a2, a3, a4):
+    def save_analog_smart_sensor_reading(self, device_id, timestamp, a1, a2, a3, a4):
         self.logger.debug("saving analog smart sensor")
         if self.db is None:
             raise FeshieDbError()
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO analog_smart_sensor_readings (device_id, avr_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (device_id, avr_id, str(timestamp), a1, a2, a3, a4))
+                "INSERT INTO analog_smart_sensor_readings (device_id, timestamp, a1, a2, a3, a4) VALUES (%s, %s, %s, %s, %s, %s)",
+                (device_id, str(timestamp), a1, a2, a3, a4))
             cursor.close()
             self.db.commit()
             self.logger.debug(
-                "%s, %s, %d, %s saved into onewire_readings",
-                device_id, timestamp, sensor_id, value)
+                "%s, %s saved into onewire_readings",
+                device_id, timestamp)
         except MySQLdb.Error as e:
             self.logger.error(e)
 
@@ -320,13 +320,15 @@ class FeshieDb(object):
         try:
             cursor = self.db.cursor()
             cursor.execute(
-                "INSERT INTO chain_readings (device_id, timestamp, t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4, VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                "INSERT INTO chain_readings (device_id, timestamp, t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (device_id, str(timestamp), t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4))
             cursor.close()
             self.db.commit()
             self.logger.debug(
-                "%s, %s, %d, %s saved into onewire_readings",
-                device_id, timestamp, sensor_id, value)
+                "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s saved into chain_readings",
+                device_id, timestamp, t1, pitch1, roll1, 
+                t2, pitch2, roll2, t3, pitch3, roll3, 
+                t4, pitch4, roll4)
         except MySQLdb.Error as e:
             self.logger.error(e)
 

@@ -87,26 +87,31 @@ class FeshieUnpacker(object):
                     self.database.save_onewire_reading(device, timestamp, SID, SV)
                     self.logger.debug("Saved onewire reading to db %s, %s, %s", device, timestamp, SID)
             elif RS485.sensor == rs485_message.Rs485.TA_CHAIN:
-                for C in RS485.tad:
-                    self.logger.debug("Chain data")
-                    #self.database.save_chain_reading(device, timestamp)
+                chain = RS485.tad
+                self.logger.debug("Chain data")
+                self.database.save_chain_reading(
+                    device, timestamp, 
+                    chain[0].temp, chain[0].pitch, chain[0].roll,
+                    chain[1].temp, chain[1].pitch, chain[1].roll,
+                    chain[2].temp, chain[2].pitch, chain[2].roll,
+                    chain[3].temp, chain[3].pitch, chain[3].roll)
             elif RS485.sensor == rs485_message.Rs485.WP:
                 self.logger.debug("WP data")
                 if len(RS485.ad) < 2:
                     self.logger.error("Not enough data from waterpressure sensor")
                     return None
-                ADC1 = RS485.ad[0]
-                ADC2 = RS485.ad[1]
+                ADC1 = RS485.ad[0].value
+                ADC2 = RS485.ad[1].value
                 if len(RS485.ad) >=3:
-                    ADC3 = RS485.ad[2]
+                    ADC3 = RS485.ad[2].value
                     if len(RS485.ad) >= 4:
-                        ADC4 = RS485.ad[3]
+                        ADC4 = RS485.ad[3].value
                     else:
                         ADC4 = None
                 else:
                     ADC3 = None
                     ADC4 = None
-                self.database.save_analog_smart_sensor_reading(self, device, timestamp, ADC1, ADC2, ADC3, ADC4)
+                self.database.save_analog_smart_sensor_reading(device, timestamp, ADC1, ADC2, ADC3, ADC4)
                 self.logger.debug("Saved analog smart sensor value to db %s %s", device, timestamp)
             else:
                 self.logger.error("Unknown sensor type %d", RS485.sensor)
@@ -114,6 +119,7 @@ class FeshieUnpacker(object):
         else:
             self.logger.error("Unexpected message type %d". RS485.type)
             return None
+        return True
 
 
 if __name__ == "__main__":
