@@ -196,7 +196,7 @@ class FeshieDb(object):
             raise FeshieDbError()
         else:
             cursor = self.db.cursor()
-            cmd = ("INSERT IGNORE INTO river_depth_readings (device, timestamp,value) VALUES (%s, %s, %s)"% (device, str(timestamp), value))
+            cmd = ("INSERT IGNORE INTO river_depth_readings (device, timestamp,value) VALUES (\"%s\", \"%s\", %s)"% (device, str(timestamp), value))
             self.logger.debug(cmd)
             cursor.execute(cmd)
             cursor.close()
