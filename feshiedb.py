@@ -7,6 +7,8 @@ from configobj import ConfigObj
 import MySQLdb
 import logging
 
+DATE_LIMIT = "2014-01-01 00:00:00"
+
 class FeshieDb(object):
 
 
@@ -346,7 +348,14 @@ class FeshieDb(object):
     def get_temperature_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" LIMIT 20;" %  node)
+        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\";" %  (node, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_battery_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, value FROM battery_readings WHERE device = \"%s\" AND timestamp > \"%s\";" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 

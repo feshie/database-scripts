@@ -58,3 +58,14 @@ def sort_data(data_raw, nodes):
                 a.append(None)
         data.append(a)
     return data 
+
+def csv_convert(data):
+    output = ""
+    for line in data:
+        for cell in line:
+            if cell is not None:
+                output+= "%s," %cell
+            else:
+                output+=","
+        output += ("\n")
+    return output
