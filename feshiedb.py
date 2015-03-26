@@ -39,6 +39,17 @@ class FeshieDb(object):
     def connected(self):
         return self.db is not None
 
+    def get_z1_nodes(self):
+        if not self.connected():
+            raise FeshieDbError()
+        self.db.query("SELECT id FROM devices WHERE type = 3")
+        result = self.db.store_result()
+        rows = result.fetch_row(0)
+        nodes = []
+        for row in rows:
+            nodes.append(row[0])
+        return nodes
+
     def get_wunderground_stations(self):
         self.db.query("SELECT id FROM devices WHERE type = 1")
         result = self.db.store_result()
@@ -332,6 +343,12 @@ class FeshieDb(object):
         except MySQLdb.Error as e:
             self.logger.error(e)
 
+    def get_temperature_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" LIMIT 20;" %  node)
+        raw = self.db.store_result().fetch_row(0)
+        return raw
 
 class FeshieDbConfig(object):
     """
