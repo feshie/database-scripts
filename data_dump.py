@@ -86,6 +86,32 @@ class DataDump(object):
             data.append(line)
         return data
 
+    def get_onewire_readings(self, node):
+        ids = self.database.get_onewire_ids(node)
+        self.logger.info("Using node %s ids %s ", node, ids)
+        header = ["timestamp"]
+        header.extend(ids)
+        data = [header]
+        data_raw = {}
+        self.logger.debug(data)
+        for i in ids:
+            self.logger.debug("Processing id %s", ids)
+            values = self.database.get_onewire_readings(node, i)
+            self.logger.debug("Got %d readings", len(values))
+            for value in values:
+                data_raw = merge_data(data_raw, i, value)
+        self.logger.info("%d timestamps in data", len(data_raw))
+        sorted_data = sort_data(data_raw, ids)
+        data.extend(sorted_data)
+        return data
+
+    def get_analog_smart_readings(self, node):
+        raw = self.database.get_analog_smart_readings(node)
+        data = []
+        for i in raw:
+            data.append([i[0], i[1], i[2], i[3], i[4]])
+        return data
+
 def merge_data(output, node, values):
     timestamp = values[0]
     value = values[1]
@@ -113,8 +139,9 @@ def csv_convert(data):
     output = ""
     for line in data:
         for cell in line:
+            print cell
             if cell is not None:
-                output+= "%s," %cell
+                output+= "%s," % cell
             else:
                 output+=","
         output += ("\n")

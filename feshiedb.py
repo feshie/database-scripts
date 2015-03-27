@@ -379,6 +379,30 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
+    def get_onewire_ids(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT DISTINCT(sensor_id)  FROM `onewire_readings` WHERE `device_id` = \"%s\"" %  node)
+        raw = self.db.store_result().fetch_row(0)
+        ids = []
+        for r in raw:
+            ids.append(r[0])
+        return ids
+
+    def get_onewire_readings(self, node, sensor_id):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, value FROM onewire_readings WHERE device_id = \"%s\" AND sensor_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, sensor_id, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_analog_smart_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, a1, a2, a3, a4 FROM analog_smart_sensor_readings WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
 class FeshieDbConfig(object):
     """
         A class containing the connection information required to access the
