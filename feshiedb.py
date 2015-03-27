@@ -348,21 +348,34 @@ class FeshieDb(object):
     def get_temperature_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\";" %  (node, DATE_LIMIT))
+        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
     def get_battery_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM battery_readings WHERE device_id = \"%s\" AND timestamp > \"%s\";" %  (node, DATE_LIMIT))
+        self.db.query("SELECT timestamp, value FROM battery_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
     def get_acceleromter_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, pitch, roll FROM accelerometer_converted WHERE device_id = \"%s\" AND timestamp > \"%s\";" %  (node, DATE_LIMIT))
+        self.db.query("SELECT timestamp, pitch, roll FROM accelerometer_converted WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_latest_node_readings(self):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT device, MAX(timestamp) FROM `temperature_readings` WHERE timestamp <= NOW( ) GROUP BY device")
+        return self.db.store_result().fetch_row(0)
+
+    def get_adc_readings(self, node, adc):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, value FROM adc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW() AND adc_id = %s;" %  (node, DATE_LIMIT, adc))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
