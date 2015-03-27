@@ -402,6 +402,13 @@ class FeshieDb(object):
         self.db.query("SELECT timestamp, a1, a2, a3, a4 FROM analog_smart_sensor_readings WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
+    
+    def get_chain_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, t1, pitch1, roll1, t2, pitch2, roll2, t3, pitch3, roll3, t4, pitch4, roll4 FROM chain_readings WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
 
 class FeshieDbConfig(object):
     """

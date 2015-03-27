@@ -107,9 +107,23 @@ class DataDump(object):
 
     def get_analog_smart_readings(self, node):
         raw = self.database.get_analog_smart_readings(node)
-        data = []
+        header = ["timestamp", "ADC1", "ADC2", "ADC3", "ADC4"]
+        data = [header]
         for i in raw:
             data.append([i[0], i[1], i[2], i[3], i[4]])
+        return data
+
+    def get_chain_readings(self, node):
+        raw = self.database.get_chain_readings(node)
+        header = [
+            "timestamp", 
+            "Temp 1", "Pitch 1", "Roll 1",
+            "Temp 2", "Pitch 2", "Roll 2",
+            "Temp 3", "Pitch 3", "Roll 3",
+            "Temp 4", "Pitch 4", "Roll 4"]
+        data = [header]
+        for i in raw:
+            data.append([i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9], i[10], i[11], i[12]])
         return data
 
 def merge_data(output, node, values):
