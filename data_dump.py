@@ -78,6 +78,26 @@ class DataDump(object):
         data.extend(sorted_data)
         return data
 
+    def get_moisture_readings(self):
+        nodes = self.get_nodes()
+        self.logger.info("Using nodes %s", nodes)
+        header = ["timestamp"]
+        header.extend(nodes)
+        data = [header]
+        data_raw = {}
+        self.logger.debug(data)
+        for node in nodes:
+            self.logger.debug("Processing node %s", node)
+            values = self.database.get_moisture_readings(node)
+            self.logger.debug("Got %d readings", len(values))
+            for value in values:
+                data_raw = merge_data(data_raw, node, value)
+        self.logger.info("%d timestamps in data", len(data_raw))
+        sorted_data = sort_data(data_raw, nodes)
+        self.logger.debug("%d timestamps in sorted data", len(sorted_data))
+        data.extend(sorted_data)
+        return data
+
     def get_accelerometer_readings(self, node):
         raw = self.database.get_acceleromter_readings(node)
         data = [["timestamp", "pitch", "roll"]]

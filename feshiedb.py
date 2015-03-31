@@ -410,6 +410,13 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
+    def get_moisture_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT timestamp, value FROM adc_described WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW() AND sensor = \"moisture\";" %  (node,  DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
 class FeshieDbConfig(object):
     """
         A class containing the connection information required to access the
