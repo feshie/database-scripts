@@ -369,7 +369,7 @@ class FeshieDb(object):
     def get_latest_node_readings(self):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT device, MAX(timestamp) FROM `temperature_readings` WHERE timestamp <= NOW( ) AND device IN ( SELECT id FROM device_info WHERE type = \"Z1\") GROUP BY device")
+        self.db.query("SELECT device, MAX(timestamp) AS timestamp FROM `temperature_readings` WHERE timestamp <= NOW( ) AND device IN ( SELECT id FROM device_info WHERE type = \"Z1\") GROUP BY device ORDER BY timestamp DESC;")
         return self.db.store_result().fetch_row(0)
 
     def get_adc_readings(self, node, adc):
