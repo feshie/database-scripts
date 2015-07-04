@@ -412,6 +412,14 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
+    def get_chain_temperatures(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT timestamp, ambient, t1, t2, t3, t4 FROM chain_temperatures WHERE device_id = \"%s\";"
+            % node)
+        return self.db.store_result().fetch_row(0)
+
     def get_moisture_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
