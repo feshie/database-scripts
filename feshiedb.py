@@ -422,7 +422,7 @@ class FeshieDb(object):
     def get_rain_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), mm FROM rain_converted WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM rain_hourly WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
