@@ -426,6 +426,24 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
+    def get_node_name(self, node_id):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT name FROM current_names WHERE device_id = \"%s\";"
+            % node_id)
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_node_id(self, name):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT device_id FROM current_names WHERE name = \"%s\";"
+            % name)
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
 class FeshieDbConfig(object):
     """
         A class containing the connection information required to access the
