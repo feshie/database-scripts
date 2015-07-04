@@ -22,7 +22,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
