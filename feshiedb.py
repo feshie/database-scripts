@@ -432,7 +432,11 @@ class FeshieDb(object):
         self.db.query(
             "SELECT name FROM current_names WHERE device_id = \"%s\";"
             % node_id)
-        raw = self.db.store_result().fetch_row(0)[0][0]
+        try:
+            raw = self.db.store_result().fetch_row(0)[0][0]
+        except IndexError:
+            #Means that there is no known name for this id
+            raw = node_id
         return raw
 
     def get_node_id(self, name):
@@ -441,7 +445,11 @@ class FeshieDb(object):
         self.db.query(
             "SELECT device_id FROM current_names WHERE name = \"%s\";"
             % name)
-        raw = self.db.store_result().fetch_row(0)[0][0]
+        try:
+            raw = self.db.store_result().fetch_row(0)[0][0]
+        except IndexError:
+            #Name not known therefore cannot tell what node it is meant to be
+            raw = None
         return raw
 
 class FeshieDbConfig(object):
