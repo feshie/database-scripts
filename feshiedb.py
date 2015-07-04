@@ -350,7 +350,7 @@ class FeshieDb(object):
     def get_temperature_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
