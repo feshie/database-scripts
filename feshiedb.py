@@ -357,7 +357,7 @@ class FeshieDb(object):
     def get_battery_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM battery_readings_corrected WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM battery_readings_corrected WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
@@ -377,7 +377,7 @@ class FeshieDb(object):
     def get_adc_readings(self, node, adc):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM adc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW() AND adc_id = %s;" %  (node, DATE_LIMIT, adc))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), value FROM adc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW() AND adc_id = %s;" %  (node, DATE_LIMIT, adc))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
@@ -415,14 +415,14 @@ class FeshieDb(object):
     def get_moisture_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM adc_described WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW() AND sensor = \"moisture\";" %  (node,  DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM adc_described WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW() AND sensor = \"moisture\";" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
     def get_rain_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, mm FROM rain_converted WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), mm FROM rain_converted WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
