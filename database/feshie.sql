@@ -1,13 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 3.3.2deb1ubuntu1
+-- version 4.0.10deb1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Mar 31, 2015 at 02:55 PM
--- Server version: 5.1.73
--- PHP Version: 5.3.2-1ubuntu4.29
+-- Generation Time: Sep 02, 2015 at 03:26 PM
+-- Server version: 5.5.44-0ubuntu0.14.04.1
+-- PHP Version: 5.5.9-1ubuntu4.11
 
-SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -16,9 +17,18 @@ SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 /*!40101 SET NAMES utf8 */;
 
 --
--- Database: `feshie_test`
+-- Database: `feshie`
 --
 
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `1068_20_water_depth`
+--
+CREATE TABLE IF NOT EXISTS `1068_20_water_depth` (
+`timestamp` datetime
+,`depth` double(17,0)
+);
 -- --------------------------------------------------------
 
 --
@@ -48,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `accelerometer_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Raw readings from the acceleromenters' AUTO_INCREMENT=57539 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Raw readings from the acceleromenters' AUTO_INCREMENT=9165 ;
 
 -- --------------------------------------------------------
 
@@ -81,7 +91,7 @@ CREATE TABLE IF NOT EXISTS `adc_ids` (
 
 CREATE TABLE IF NOT EXISTS `adc_mapping` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `device_id` int(11) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
   `adc_id` int(11) NOT NULL,
   `start` datetime NOT NULL,
   `end` datetime DEFAULT NULL,
@@ -92,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `adc_mapping` (
   KEY `start` (`start`),
   KEY `end` (`end`),
   KEY `name` (`name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
 -- --------------------------------------------------------
 
@@ -122,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `adc_readings` (
   KEY `adc_id` (`adc_id`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id_2` (`device_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=35104 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3137 ;
 
 -- --------------------------------------------------------
 
@@ -133,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `adc_readings` (
 CREATE TABLE IF NOT EXISTS `analog_smart_sensor_readings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` varchar(40) NOT NULL,
-  `avr_id` int(11) NOT NULL,
+  `avr_id` int(11) DEFAULT NULL,
   `timestamp` datetime NOT NULL,
   `a1` float DEFAULT NULL,
   `a2` float DEFAULT NULL,
@@ -144,7 +154,7 @@ CREATE TABLE IF NOT EXISTS `analog_smart_sensor_readings` (
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`),
   KEY `avr_id` (`avr_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Data from the AVR analog smart sensors' AUTO_INCREMENT=2284 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Data from the AVR analog smart sensors' AUTO_INCREMENT=2171 ;
 
 -- --------------------------------------------------------
 
@@ -172,8 +182,18 @@ CREATE TABLE IF NOT EXISTS `battery_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=57548 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9165 ;
 
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `battery_readings_corrected`
+--
+CREATE TABLE IF NOT EXISTS `battery_readings_corrected` (
+`device_id` varchar(40)
+,`timestamp` datetime
+,`value` double
+);
 -- --------------------------------------------------------
 
 --
@@ -200,8 +220,31 @@ CREATE TABLE IF NOT EXISTS `chain_readings` (
   KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=156 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2643 ;
 
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `chain_temperatures`
+--
+CREATE TABLE IF NOT EXISTS `chain_temperatures` (
+`device_id` varchar(40)
+,`timestamp` datetime
+,`ambient` float
+,`t1` float
+,`t2` float
+,`t3` float
+,`t4` float
+);
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `current_names`
+--
+CREATE TABLE IF NOT EXISTS `current_names` (
+`device_id` varchar(40)
+,`name` varchar(40)
+);
 -- --------------------------------------------------------
 
 --
@@ -233,6 +276,24 @@ CREATE TABLE IF NOT EXISTS `device_info` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `device_names`
+--
+
+CREATE TABLE IF NOT EXISTS `device_names` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `device_id` varchar(40) NOT NULL,
+  `name` varchar(40) NOT NULL,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `device_id_2` (`device_id`,`start_date`),
+  KEY `name` (`name`),
+  KEY `device_id` (`device_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Used to map ''friendly names'' to device IDs' AUTO_INCREMENT=10 ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `device_type`
 --
 
@@ -258,7 +319,7 @@ CREATE TABLE IF NOT EXISTS `dewpoint_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=251627 ;
 
 -- --------------------------------------------------------
 
@@ -286,7 +347,7 @@ CREATE TABLE IF NOT EXISTS `humidity_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=251630 ;
 
 -- --------------------------------------------------------
 
@@ -309,6 +370,16 @@ CREATE TABLE IF NOT EXISTS `image_data` (
 -- --------------------------------------------------------
 
 --
+-- Stand-in structure for view `latest_node_readings`
+--
+CREATE TABLE IF NOT EXISTS `latest_node_readings` (
+`device` varchar(40)
+,`name` varchar(40)
+,`timestamp` datetime
+);
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `locations`
 --
 
@@ -324,7 +395,7 @@ CREATE TABLE IF NOT EXISTS `locations` (
   KEY `latitude` (`latitude`),
   KEY `longitude` (`longitude`),
   KEY `altitude` (`altitude`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
 
 -- --------------------------------------------------------
 
@@ -357,7 +428,7 @@ CREATE TABLE IF NOT EXISTS `onewire_readings` (
   KEY `sensor_id` (`sensor_id`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id` (`timestamp`,`sensor_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=105376 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1776 ;
 
 -- --------------------------------------------------------
 
@@ -374,7 +445,7 @@ CREATE TABLE IF NOT EXISTS `pressure_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=223750 ;
 
 -- --------------------------------------------------------
 
@@ -394,7 +465,7 @@ CREATE TABLE IF NOT EXISTS `rain_converted` (
 CREATE TABLE IF NOT EXISTS `rain_hourly` (
 `device_id` varchar(40)
 ,`timestamp` varchar(24)
-,`SUM(value)` decimal(32,0)
+,`value` decimal(32,0)
 );
 -- --------------------------------------------------------
 
@@ -411,7 +482,7 @@ CREATE TABLE IF NOT EXISTS `rain_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id_2` (`device_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2400 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2307 ;
 
 -- --------------------------------------------------------
 
@@ -427,7 +498,7 @@ CREATE TABLE IF NOT EXISTS `river_depth_readings` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `device` (`device`,`timestamp`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='River depth in meters' AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='River depth in meters' AUTO_INCREMENT=358481 ;
 
 -- --------------------------------------------------------
 
@@ -452,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `temperature_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=57547 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=329561 ;
 
 -- --------------------------------------------------------
 
@@ -466,12 +537,12 @@ CREATE TABLE IF NOT EXISTS `unprocessed_data` (
   `timestamp` datetime NOT NULL,
   `data` blob NOT NULL,
   `unpacked` tinyint(1) NOT NULL DEFAULT '0',
-  `corrupt` tinyint(1) NOT NULL DEFAULT '0',
+  `corrupt` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `device_id` (`device_id`),
   KEY `timestamp` (`timestamp`),
   KEY `unpacked` (`unpacked`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=57792 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=39589 ;
 
 -- --------------------------------------------------------
 
@@ -488,7 +559,7 @@ CREATE TABLE IF NOT EXISTS `unprocessed_smart_data` (
   `corrupt` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `device_id` (`device_id`,`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=23515 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6124 ;
 
 -- --------------------------------------------------------
 
@@ -506,7 +577,7 @@ CREATE TABLE IF NOT EXISTS `wind_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=277690 ;
 
 -- --------------------------------------------------------
 
@@ -534,6 +605,15 @@ CREATE TABLE IF NOT EXISTS `wunderground_latest_difference` (
 -- --------------------------------------------------------
 
 --
+-- Structure for view `1068_20_water_depth`
+--
+DROP TABLE IF EXISTS `1068_20_water_depth`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `1068_20_water_depth` AS select `analog_smart_sensor_readings`.`timestamp` AS `timestamp`,round((((((`analog_smart_sensor_readings`.`a1` + 81.6876) / 99.559) - ((`analog_smart_sensor_readings`.`a2` + 7493.446) / 105.8817)) * 10.19744) + 10),0) AS `depth` from `analog_smart_sensor_readings`;
+
+-- --------------------------------------------------------
+
+--
 -- Structure for view `accelerometer_converted`
 --
 DROP TABLE IF EXISTS `accelerometer_converted`;
@@ -548,6 +628,33 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 DROP TABLE IF EXISTS `adc_described`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `adc_described` AS select `a`.`id` AS `id`,`a`.`device_id` AS `device_id`,`a`.`timestamp` AS `timestamp`,`a`.`value` AS `value`,`m`.`name` AS `sensor` from (`adc_readings` `a` left join `adc_mapping` `m` on(((`a`.`device_id` = `m`.`device_id`) and (`a`.`adc_id` = `m`.`adc_id`))));
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `battery_readings_corrected`
+--
+DROP TABLE IF EXISTS `battery_readings_corrected`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `battery_readings_corrected` AS select `battery_readings`.`device_id` AS `device_id`,`battery_readings`.`timestamp` AS `timestamp`,((`battery_readings`.`value` * 1.4417) - 0.2532) AS `value` from `battery_readings`;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `chain_temperatures`
+--
+DROP TABLE IF EXISTS `chain_temperatures`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `chain_temperatures` AS select `t`.`device` AS `device_id`,`t`.`timestamp` AS `timestamp`,`t`.`value` AS `ambient`,`c`.`t1` AS `t1`,`c`.`t2` AS `t2`,`c`.`t3` AS `t3`,`c`.`t4` AS `t4` from (`temperature_readings` `t` left join `chain_readings` `c` on(((`t`.`device` = `c`.`device_id`) and (`t`.`timestamp` = `c`.`timestamp`)))) where `t`.`device` in (select `c`.`device_id` from `devices` where (`devices`.`type` = 3));
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `current_names`
+--
+DROP TABLE IF EXISTS `current_names`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `current_names` AS select `device_names`.`device_id` AS `device_id`,`device_names`.`name` AS `name` from `device_names` where isnull(`device_names`.`end_date`);
 
 -- --------------------------------------------------------
 
@@ -570,6 +677,15 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIE
 -- --------------------------------------------------------
 
 --
+-- Structure for view `latest_node_readings`
+--
+DROP TABLE IF EXISTS `latest_node_readings`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `latest_node_readings` AS select `temperature_readings`.`device` AS `device`,`device_names`.`name` AS `name`,max(`temperature_readings`.`timestamp`) AS `timestamp` from (`temperature_readings` left join `device_names` on((`temperature_readings`.`device` = `device_names`.`device_id`))) where ((`temperature_readings`.`timestamp` <= now()) and `temperature_readings`.`device` in (select `device_info`.`id` from `device_info` where (`device_info`.`type` = 'Z1'))) group by `temperature_readings`.`device` order by max(`temperature_readings`.`timestamp`) desc;
+
+-- --------------------------------------------------------
+
+--
 -- Structure for view `rain_converted`
 --
 DROP TABLE IF EXISTS `rain_converted`;
@@ -583,7 +699,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `rain_hourly`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `rain_hourly` AS select `rain_readings`.`device_id` AS `device_id`,date_format(`rain_readings`.`timestamp`,'%Y-%m-%d %H:00:00') AS `timestamp`,sum(`rain_readings`.`value`) AS `SUM(value)` from `rain_readings` group by cast(`rain_readings`.`timestamp` as date),hour(`rain_readings`.`timestamp`);
+CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `rain_hourly` AS select `rain_readings`.`device_id` AS `device_id`,date_format(`rain_readings`.`timestamp`,'%Y-%m-%d %H:00:00') AS `timestamp`,sum(`rain_readings`.`value`) AS `value` from `rain_readings` group by cast(`rain_readings`.`timestamp` as date),hour(`rain_readings`.`timestamp`);
 
 -- --------------------------------------------------------
 
@@ -617,17 +733,10 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIE
 --
 
 --
--- Constraints for table `adc_readings`
+-- Constraints for table `device_names`
 --
-ALTER TABLE `adc_readings`
-  ADD CONSTRAINT `adc_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
-
---
--- Constraints for table `devices`
---
-ALTER TABLE `devices`
-  ADD CONSTRAINT `devices_ibfk_1` FOREIGN KEY (`location`) REFERENCES `locations` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `devices_ibfk_2` FOREIGN KEY (`type`) REFERENCES `device_type` (`id`) ON UPDATE CASCADE;
+ALTER TABLE `device_names`
+  ADD CONSTRAINT `device_names_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `dewpoint_readings`
@@ -670,3 +779,7 @@ ALTER TABLE `temperature_readings`
 --
 ALTER TABLE `wind_readings`
   ADD CONSTRAINT `wind_readings_ibfk_1` FOREIGN KEY (`device`) REFERENCES `devices` (`id`);
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
