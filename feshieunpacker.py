@@ -33,7 +33,7 @@ class FeshieUnpacker(object):
                 sample.ParseFromString(unhex(record.data[2:]))
             except DecodeError as e:
                 self.logger.error(
-                    "Unpacking  gave error %s",
+                    "Unpacking %s gave error %s",
                     record.id, e)
                 self.database.mark_processed(record.id)
                 self.database.mark_corrupt(record.id)
