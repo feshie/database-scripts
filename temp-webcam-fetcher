@@ -6,3 +6,4 @@ cd /home/mountainsensing/www/feshie/webcams/temp
 wget -q www.winterhighland.info/cams/cairngorm-mountain/lady.jpeg -O lady-${epoch}.jpg
 wget -q http://www.winterhighland.info/cams/cairngorm-mountain/morlich.jpeg -O morlich${epoch}.jpg
 wget -q http://www.winterhighland.info/cams/aviemore/aviemore@2.jpeg -O aviemore-${epoch}.jpg
+wget -q http://www.cairngormmountain.org/webcams/live/Ptarmigan1.jpg -O ptarmigan1-${epoch}.jpg
