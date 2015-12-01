@@ -84,6 +84,9 @@ class FeshieUnpacker(object):
                 for S in RS485.ow:
                     SID = S.id
                     SV = S.value
+                    if(248 < SV):          # It should be negative due to bug
+                                            # AVR code
+                        SV = -float(((int(SV * 16) ^ 0xFFFF)+1))/16
                     self.database.save_onewire_reading(device, timestamp, SID, SV)
                     self.logger.debug("Saved onewire reading to db %s, %s, %s", device, timestamp, SID)
             elif RS485.sensor == rs485_message.Rs485.TA_CHAIN:
