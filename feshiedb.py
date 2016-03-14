@@ -362,14 +362,14 @@ class FeshieDb(object):
     def get_temperature_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), value FROM temperature_readings WHERE device = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
     def get_battery_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM battery_readings_corrected WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM battery_readings_corrected WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
@@ -383,13 +383,13 @@ class FeshieDb(object):
     def get_latest_node_readings(self):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT device, MAX(timestamp) AS timestamp FROM `temperature_readings` WHERE timestamp <= NOW( ) AND device IN ( SELECT id FROM device_info WHERE type = \"Z1\") GROUP BY device ORDER BY timestamp DESC;")
+        self.db.query("SELECT device, name, timestamp FROM latest_node_readings;")
         return self.db.store_result().fetch_row(0)
 
     def get_adc_readings(self, node, adc):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM adc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW() AND adc_id = %s;" %  (node, DATE_LIMIT, adc))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\" ), value FROM adc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW() AND adc_id = %s;" %  (node, DATE_LIMIT, adc))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
@@ -424,18 +424,52 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
+    def get_chain_temperatures(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT timestamp, ambient, t1, t2, t3, t4 FROM chain_temperatures WHERE device_id = \"%s\";"
+            % node)
+        return self.db.store_result().fetch_row(0)
+
     def get_moisture_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, value FROM adc_described WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW() AND sensor = \"moisture\";" %  (node,  DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM adc_described WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW() AND sensor = \"moisture\";" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 
     def get_rain_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT timestamp, mm FROM rain_converted WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM rain_hourly WHERE device_id = \"%s\"  AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node,  DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_node_name(self, node_id):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT name FROM current_names WHERE device_id = \"%s\";"
+            % node_id)
+        try:
+            raw = self.db.store_result().fetch_row(0)[0][0]
+        except IndexError:
+            #Means that there is no known name for this id
+            raw = node_id
+        return raw
+
+    def get_node_id(self, name):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query(
+            "SELECT device_id FROM current_names WHERE name = \"%s\";"
+            % name)
+        try:
+            raw = self.db.store_result().fetch_row(0)[0][0]
+        except IndexError:
+            #Name not known therefore cannot tell what node it is meant to be
+            raw = None
         return raw
 
 class FeshieDbConfig(object):

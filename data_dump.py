@@ -22,7 +22,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
@@ -42,7 +43,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
@@ -62,7 +64,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
@@ -82,7 +85,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
@@ -102,7 +106,8 @@ class DataDump(object):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
         header = ["timestamp"]
-        header.extend(nodes)
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
         data = [header]
         data_raw = {}
         self.logger.debug(data)
@@ -164,6 +169,15 @@ class DataDump(object):
         data = [header]
         for i in raw:
             data.append([i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9], i[10], i[11], i[12]])
+        return data
+
+    def get_chain_temperature_readings(self, node):
+        raw = self.database.get_chain_temperatures(node)
+        header = [
+            "timestamp", "Ambient", "t1", "t2", "t3", "t4"]
+        data = [header]
+        for i in raw:
+            data.append([i[0], i[1], i[2], i[3], i[4], i[5]])
         return data
 
 def merge_data(output, node, values):
