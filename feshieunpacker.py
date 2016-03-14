@@ -39,7 +39,10 @@ class FeshieUnpacker(object):
                 self.database.mark_corrupt(record.id)
                 continue
             timestamp = datetime.utcfromtimestamp(sample.time)
-            self.database.save_temperature(node, timestamp, sample.temp)
+            temperature = sample.temp
+            if temperature < -100:
+                temperature =  float((((int(temperature *4) ) ^ 0x1FF) +1))/4
+            self.database.save_temperature(node, timestamp, temperature)
             self.database.save_voltage(node, timestamp, sample.batt)
             self.database.save_accelerometer(
                 node, timestamp,
