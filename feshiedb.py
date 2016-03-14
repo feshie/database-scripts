@@ -156,6 +156,18 @@ class FeshieDb(object):
             self.db.commit()
             self.logger.debug("Temperature stored")
 
+    def update_temperature(self, device, timestamp, value):
+        self.logger.debug("Updating temperature")
+        if self.db is None:
+            raise FeshieDbError()
+        else:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "UPDATE temperature_readings SET value = %s WHERE device = %s AND timestamp = %s",
+                (value, device, timestamp))
+            cursor.close()
+            self.db.commit()
+            self.logger.debug("Temperature updated")
     def save_humidity(self, device, timestamp, value):
         self.logger.debug("Saving humidity")
         if self.db is None:
