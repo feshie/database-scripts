@@ -609,7 +609,7 @@ CREATE TABLE IF NOT EXISTS `wunderground_latest_difference` (
 --
 DROP TABLE IF EXISTS `1068_20_water_depth`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `1068_20_water_depth` AS select `analog_smart_sensor_readings`.`timestamp` AS `timestamp`,round((((((`analog_smart_sensor_readings`.`a1` + 81.6876) / 99.559) - ((`analog_smart_sensor_readings`.`a2` + 7493.446) / 105.8817)) * 10.19744) + 10),0) AS `depth` from `analog_smart_sensor_readings`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `1068_20_water_depth` AS select `analog_smart_sensor_readings`.`timestamp` AS `timestamp`,round((((((`analog_smart_sensor_readings`.`a1` + 81.6876) / 99.559) - ((`analog_smart_sensor_readings`.`a2` + 7493.446) / 105.8817)) * 10.19744) + 10),0) AS `depth` from `analog_smart_sensor_readings`;
 
 -- --------------------------------------------------------
 
@@ -618,7 +618,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `accelerometer_converted`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `accelerometer_converted` AS select `accelerometer_readings`.`id` AS `id`,`accelerometer_readings`.`device_id` AS `device_id`,`accelerometer_readings`.`timestamp` AS `timestamp`,round(((atan(`accelerometer_readings`.`y`,`accelerometer_readings`.`z`) * 180) / pi()),0) AS `pitch`,round(((atan(`accelerometer_readings`.`x`,sqrt(((`accelerometer_readings`.`y` * `accelerometer_readings`.`y`) + (`accelerometer_readings`.`z` * `accelerometer_readings`.`z`)))) * 180) / pi()),0) AS `roll` from `accelerometer_readings` where 1;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `accelerometer_converted` AS select `accelerometer_readings`.`id` AS `id`,`accelerometer_readings`.`device_id` AS `device_id`,`accelerometer_readings`.`timestamp` AS `timestamp`,round(((atan(`accelerometer_readings`.`y`,`accelerometer_readings`.`z`) * 180) / pi()),0) AS `pitch`,round(((atan(`accelerometer_readings`.`x`,sqrt(((`accelerometer_readings`.`y` * `accelerometer_readings`.`y`) + (`accelerometer_readings`.`z` * `accelerometer_readings`.`z`)))) * 180) / pi()),0) AS `roll` from `accelerometer_readings` where 1;
 
 -- --------------------------------------------------------
 
@@ -627,7 +627,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `adc_described`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `adc_described` AS select `a`.`id` AS `id`,`a`.`device_id` AS `device_id`,`a`.`timestamp` AS `timestamp`,`a`.`value` AS `value`,`m`.`name` AS `sensor` from (`adc_readings` `a` left join `adc_mapping` `m` on(((`a`.`device_id` = `m`.`device_id`) and (`a`.`adc_id` = `m`.`adc_id`))));
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `adc_described` AS select `a`.`id` AS `id`,`a`.`device_id` AS `device_id`,`a`.`timestamp` AS `timestamp`,`a`.`value` AS `value`,`m`.`name` AS `sensor` from (`adc_readings` `a` left join `adc_mapping` `m` on(((`a`.`device_id` = `m`.`device_id`) and (`a`.`adc_id` = `m`.`adc_id`))));
 
 -- --------------------------------------------------------
 
@@ -636,7 +636,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `battery_readings_corrected`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `battery_readings_corrected` AS select `battery_readings`.`device_id` AS `device_id`,`battery_readings`.`timestamp` AS `timestamp`,((`battery_readings`.`value` * 1.4417) - 0.2532) AS `value` from `battery_readings`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `battery_readings_corrected` AS select `battery_readings`.`device_id` AS `device_id`,`battery_readings`.`timestamp` AS `timestamp`,((`battery_readings`.`value` * 1.4417) - 0.2532) AS `value` from `battery_readings`;
 
 -- --------------------------------------------------------
 
@@ -645,7 +645,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `chain_temperatures`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `chain_temperatures` AS select `t`.`device` AS `device_id`,`t`.`timestamp` AS `timestamp`,`t`.`value` AS `ambient`,`c`.`t1` AS `t1`,`c`.`t2` AS `t2`,`c`.`t3` AS `t3`,`c`.`t4` AS `t4` from (`temperature_readings` `t` left join `chain_readings` `c` on(((`t`.`device` = `c`.`device_id`) and (`t`.`timestamp` = `c`.`timestamp`)))) where `t`.`device` in (select `c`.`device_id` from `devices` where (`devices`.`type` = 3));
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `chain_temperatures` AS select `t`.`device` AS `device_id`,`t`.`timestamp` AS `timestamp`,`t`.`value` AS `ambient`,`c`.`t1` AS `t1`,`c`.`t2` AS `t2`,`c`.`t3` AS `t3`,`c`.`t4` AS `t4` from (`temperature_readings` `t` left join `chain_readings` `c` on(((`t`.`device` = `c`.`device_id`) and (`t`.`timestamp` = `c`.`timestamp`)))) where `t`.`device` in (select `c`.`device_id` from `devices` where (`devices`.`type` = 3));
 
 -- --------------------------------------------------------
 
@@ -663,7 +663,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `device_info`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIEW `device_info` AS select `devices`.`id` AS `id`,`device_type`.`name` AS `type`,`locations`.`name` AS `location`,`locations`.`latitude` AS `latitude`,`locations`.`longitude` AS `longitude`,`locations`.`altitude` AS `altitude` from ((`devices` left join `device_type` on((`devices`.`type` = `device_type`.`id`))) left join `locations` on((`devices`.`location` = `locations`.`id`)));
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `device_info` AS select `devices`.`id` AS `id`,`device_type`.`name` AS `type`,`locations`.`name` AS `location`,`locations`.`latitude` AS `latitude`,`locations`.`longitude` AS `longitude`,`locations`.`altitude` AS `altitude` from ((`devices` left join `device_type` on((`devices`.`type` = `device_type`.`id`))) left join `locations` on((`devices`.`location` = `locations`.`id`)));
 
 -- --------------------------------------------------------
 
@@ -672,7 +672,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIE
 --
 DROP TABLE IF EXISTS `feshie_bridge_readings`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIEW `feshie_bridge_readings` AS select `river_depth_readings`.`id` AS `id`,`river_depth_readings`.`device` AS `device`,`river_depth_readings`.`timestamp` AS `timestamp`,`river_depth_readings`.`value` AS `value` from `river_depth_readings` where (`river_depth_readings`.`device` like 'Feshie Bridge');
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `feshie_bridge_readings` AS select `river_depth_readings`.`id` AS `id`,`river_depth_readings`.`device` AS `device`,`river_depth_readings`.`timestamp` AS `timestamp`,`river_depth_readings`.`value` AS `value` from `river_depth_readings` where (`river_depth_readings`.`device` like 'Feshie Bridge');
 
 -- --------------------------------------------------------
 
@@ -690,7 +690,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `rain_converted`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `rain_converted` AS select `rain_readings`.`device_id` AS `device_id`,`rain_readings`.`timestamp` AS `timestamp`,((`rain_readings`.`value` * 2) / 55) AS `mm` from `rain_readings`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `rain_converted` AS select `rain_readings`.`device_id` AS `device_id`,`rain_readings`.`timestamp` AS `timestamp`,((`rain_readings`.`value` * 2) / 55) AS `mm` from `rain_readings`;
 
 -- --------------------------------------------------------
 
@@ -699,7 +699,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `rain_hourly`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `rain_hourly` AS select `rain_readings`.`device_id` AS `device_id`,date_format(`rain_readings`.`timestamp`,'%Y-%m-%d %H:00:00') AS `timestamp`,sum(`rain_readings`.`value`) AS `value` from `rain_readings` group by cast(`rain_readings`.`timestamp` as date),hour(`rain_readings`.`timestamp`);
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `rain_hourly` AS select `rain_readings`.`device_id` AS `device_id`,date_format(`rain_readings`.`timestamp`,'%Y-%m-%d %H:00:00') AS `timestamp`,sum(`rain_readings`.`value`) AS `value` from `rain_readings` group by cast(`rain_readings`.`timestamp` as date),hour(`rain_readings`.`timestamp`);
 
 -- --------------------------------------------------------
 
@@ -708,7 +708,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb`@`localhost` SQL SECURITY DEFINER VIEW `
 --
 DROP TABLE IF EXISTS `sepa_latest_difference`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIEW `sepa_latest_difference` AS select ((unix_timestamp() - unix_timestamp(max(`river_depth_readings`.`timestamp`))) / 60) AS `difference` from `river_depth_readings` where (`river_depth_readings`.`device` = 'Feshie Bridge');
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `sepa_latest_difference` AS select ((unix_timestamp() - unix_timestamp(max(`river_depth_readings`.`timestamp`))) / 60) AS `difference` from `river_depth_readings` where (`river_depth_readings`.`device` = 'Feshie Bridge');
 
 -- --------------------------------------------------------
 
@@ -717,7 +717,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIE
 --
 DROP TABLE IF EXISTS `wunderground_data`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIEW `wunderground_data` AS select `device_info`.`location` AS `location`,`t`.`timestamp` AS `timestamp`,`t`.`value` AS `temperature`,`d`.`value` AS `dewpoint`,`h`.`value` AS `humidity`,`p`.`value` AS `pressure`,`w`.`direction` AS `wind_direction`,`w`.`speed` AS `wind_speed` from (((((`temperature_readings` `t` left join `device_info` on((`t`.`device` = `device_info`.`id`))) left join `dewpoint_readings` `d` on(((`t`.`device` = `d`.`device`) and (`t`.`timestamp` = `d`.`timestamp`)))) left join `humidity_readings` `h` on(((`t`.`device` = `h`.`device`) and (`t`.`timestamp` = `h`.`timestamp`)))) left join `pressure_readings` `p` on(((`t`.`device` = `p`.`device`) and (`t`.`timestamp` = `p`.`timestamp`)))) left join `wind_readings` `w` on(((`t`.`device` = `w`.`device`) and (`t`.`timestamp` = `w`.`timestamp`)))) where (`device_info`.`type` = 'wunderground') order by `t`.`timestamp`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `wunderground_data` AS select `device_info`.`location` AS `location`,`t`.`timestamp` AS `timestamp`,`t`.`value` AS `temperature`,`d`.`value` AS `dewpoint`,`h`.`value` AS `humidity`,`p`.`value` AS `pressure`,`w`.`direction` AS `wind_direction`,`w`.`speed` AS `wind_speed` from (((((`temperature_readings` `t` left join `device_info` on((`t`.`device` = `device_info`.`id`))) left join `dewpoint_readings` `d` on(((`t`.`device` = `d`.`device`) and (`t`.`timestamp` = `d`.`timestamp`)))) left join `humidity_readings` `h` on(((`t`.`device` = `h`.`device`) and (`t`.`timestamp` = `h`.`timestamp`)))) left join `pressure_readings` `p` on(((`t`.`device` = `p`.`device`) and (`t`.`timestamp` = `p`.`timestamp`)))) left join `wind_readings` `w` on(((`t`.`device` = `w`.`device`) and (`t`.`timestamp` = `w`.`timestamp`)))) where (`device_info`.`type` = 'wunderground') order by `t`.`timestamp`;
 
 -- --------------------------------------------------------
 
@@ -726,7 +726,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIE
 --
 DROP TABLE IF EXISTS `wunderground_latest_difference`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`pjb08r`@`localhost` SQL SECURITY DEFINER VIEW `wunderground_latest_difference` AS select ((unix_timestamp() - unix_timestamp(max(`wunderground_data`.`timestamp`))) / 60) AS `difference` from `wunderground_data`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `wunderground_latest_difference` AS select ((unix_timestamp() - unix_timestamp(max(`wunderground_data`.`timestamp`))) / 60) AS `difference` from `wunderground_data`;
 
 --
 -- Constraints for dumped tables
