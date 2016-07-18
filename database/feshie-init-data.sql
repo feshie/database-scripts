@@ -106,11 +106,11 @@ INSERT INTO `device_names` (`id`, `device_id`, `name`, `start_date`, `end_date`)
 -- Dumping data for table `device_type`
 --
 
-INSERT INTO `device_type` (`id`, `name`) VALUES
-(4, 'Muntjack'),
-(2, 'sepa'),
-(1, 'wunderground'),
-(3, 'Z1');
+INSERT INTO `device_type` (`id`, `name`, `node`) VALUES
+(4, 'Muntjack',1),
+(2, 'sepa',0),
+(1, 'wunderground',0),
+(3, 'Z1',1);
 
 --
 -- Dumping data for table `locations`
