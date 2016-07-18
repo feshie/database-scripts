@@ -300,6 +300,7 @@ CREATE TABLE IF NOT EXISTS `device_names` (
 CREATE TABLE IF NOT EXISTS `device_type` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(40) NOT NULL,
+    `node` tinyint(1) NOT NULL DEFAULT '0'
   PRIMARY KEY (`id`),
   KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
@@ -533,7 +534,7 @@ CREATE TABLE IF NOT EXISTS `temperature_readings` (
 
 CREATE TABLE IF NOT EXISTS `unprocessed_data` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `device_id` char(4) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
   `timestamp` datetime NOT NULL,
   `data` blob NOT NULL,
   `unpacked` tinyint(1) NOT NULL DEFAULT '0',
@@ -552,7 +553,7 @@ CREATE TABLE IF NOT EXISTS `unprocessed_data` (
 
 CREATE TABLE IF NOT EXISTS `unprocessed_smart_data` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `device_id` varchar(4) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
   `timestamp` datetime NOT NULL,
   `data` blob NOT NULL,
   `processed` tinyint(1) NOT NULL DEFAULT '0',
@@ -663,7 +664,8 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `device_info`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `device_info` AS select `devices`.`id` AS `id`,`device_type`.`name` AS `type`,`locations`.`name` AS `location`,`locations`.`latitude` AS `latitude`,`locations`.`longitude` AS `longitude`,`locations`.`altitude` AS `altitude` from ((`devices` left join `device_type` on((`devices`.`type` = `device_type`.`id`))) left join `locations` on((`devices`.`location` = `locations`.`id`)));
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `device_info`  AS  select `devices`.`id` AS `id`,`device_type`.`name` AS `type`,`locations`.`name` AS `location`,`locations`.`latitude` AS `latitude`,`locations`.`longitude` AS `longitude`,`locations`.`altitude` AS `altitude`,`device_type`.`node` AS `node` from ((`devices` left join `device_type` on((`devices`.`type` = `device_type`.`id`))) left join `locations` on((`devices`.`location` = `locations`.`id`))) ;
+
 
 -- --------------------------------------------------------
 
@@ -681,7 +683,8 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `latest_node_readings`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `latest_node_readings` AS select `temperature_readings`.`device` AS `device`,`device_names`.`name` AS `name`,max(`temperature_readings`.`timestamp`) AS `timestamp` from (`temperature_readings` left join `device_names` on((`temperature_readings`.`device` = `device_names`.`device_id`))) where ((`temperature_readings`.`timestamp` <= now()) and `temperature_readings`.`device` in (select `device_info`.`id` from `device_info` where (`device_info`.`type` = 'Z1'))) group by `temperature_readings`.`device` order by max(`temperature_readings`.`timestamp`) desc;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `latest_node_readings`  AS  select `temperature_readings`.`device` AS `device`,`device_names`.`name` AS `name`,max(`temperature_readings`.`timestamp`) AS `timestamp` from (`temperature_readings` left join `device_names` on((`temperature_readings`.`device` = `device_names`.`device_id`))) where ((`temperature_readings`.`timestamp` <= now()) and `temperature_readings`.`device` in (select `device_info`.`id` from `device_info` where (`device_info`.`node` = 1))) group by `temperature_readings`.`device` order by max(`temperature_readings`.`timestamp`) desc ;
+
 
 -- --------------------------------------------------------
 
