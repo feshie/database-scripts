@@ -3,9 +3,9 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 02, 2015 at 03:26 PM
--- Server version: 5.5.44-0ubuntu0.14.04.1
--- PHP Version: 5.5.9-1ubuntu4.11
+-- Generation Time: Jul 02, 2016 at 06:04 PM
+-- Server version: 5.5.49-0ubuntu0.14.04.1
+-- PHP Version: 5.5.9-1ubuntu4.17
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -58,7 +58,13 @@ CREATE TABLE IF NOT EXISTS `accelerometer_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Raw readings from the acceleromenters' AUTO_INCREMENT=9165 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Raw readings from the acceleromenters' AUTO_INCREMENT=89331 ;
+
+--
+-- RELATIONS FOR TABLE `accelerometer_readings`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -79,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `adc_described` (
 --
 
 CREATE TABLE IF NOT EXISTS `adc_ids` (
-  `id` int(11) NOT NULL,
+  `id` int(6) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -92,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `adc_ids` (
 CREATE TABLE IF NOT EXISTS `adc_mapping` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` varchar(40) NOT NULL,
-  `adc_id` int(11) NOT NULL,
+  `adc_id` int(6) NOT NULL,
   `start` datetime NOT NULL,
   `end` datetime DEFAULT NULL,
   `name` varchar(20) NOT NULL,
@@ -103,6 +109,14 @@ CREATE TABLE IF NOT EXISTS `adc_mapping` (
   KEY `end` (`end`),
   KEY `name` (`name`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- RELATIONS FOR TABLE `adc_mapping`:
+--   `name`
+--       `adc_names` -> `name`
+--   `adc_id`
+--       `adc_ids` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -125,14 +139,22 @@ CREATE TABLE IF NOT EXISTS `adc_readings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` varchar(40) NOT NULL,
   `timestamp` datetime NOT NULL,
-  `adc_id` smallint(6) NOT NULL,
+  `adc_id` int(6) NOT NULL,
   `value` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `device_id` (`device_id`,`timestamp`,`adc_id`),
   KEY `adc_id` (`adc_id`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id_2` (`device_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3137 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=31117 ;
+
+--
+-- RELATIONS FOR TABLE `adc_readings`:
+--   `adc_id`
+--       `adc_ids` -> `id`
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -154,7 +176,13 @@ CREATE TABLE IF NOT EXISTS `analog_smart_sensor_readings` (
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`),
   KEY `avr_id` (`avr_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Data from the AVR analog smart sensors' AUTO_INCREMENT=2171 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Data from the AVR analog smart sensors' AUTO_INCREMENT=14706 ;
+
+--
+-- RELATIONS FOR TABLE `analog_smart_sensor_readings`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -182,7 +210,13 @@ CREATE TABLE IF NOT EXISTS `battery_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9165 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=89332 ;
+
+--
+-- RELATIONS FOR TABLE `battery_readings`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -220,7 +254,13 @@ CREATE TABLE IF NOT EXISTS `chain_readings` (
   KEY `device_id` (`device_id`,`timestamp`),
   KEY `device_id_2` (`device_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2643 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7421 ;
+
+--
+-- RELATIONS FOR TABLE `chain_readings`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -260,6 +300,14 @@ CREATE TABLE IF NOT EXISTS `devices` (
   KEY `type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- RELATIONS FOR TABLE `devices`:
+--   `location`
+--       `locations` -> `id`
+--   `type`
+--       `device_type` -> `id`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -291,6 +339,12 @@ CREATE TABLE IF NOT EXISTS `device_names` (
   KEY `device_id` (`device_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='Used to map ''friendly names'' to device IDs' AUTO_INCREMENT=10 ;
 
+--
+-- RELATIONS FOR TABLE `device_names`:
+--   `device_id`
+--       `devices` -> `id`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -303,7 +357,7 @@ CREATE TABLE IF NOT EXISTS `device_type` (
     `node` tinyint(1) NOT NULL DEFAULT '0'
   PRIMARY KEY (`id`),
   KEY `name` (`name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
 
 -- --------------------------------------------------------
 
@@ -320,7 +374,13 @@ CREATE TABLE IF NOT EXISTS `dewpoint_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=251627 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=402981 ;
+
+--
+-- RELATIONS FOR TABLE `dewpoint_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -348,7 +408,13 @@ CREATE TABLE IF NOT EXISTS `humidity_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=251630 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=402984 ;
+
+--
+-- RELATIONS FOR TABLE `humidity_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -367,6 +433,12 @@ CREATE TABLE IF NOT EXISTS `image_data` (
   KEY `device_2` (`device`),
   KEY `timestamp` (`timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+--
+-- RELATIONS FOR TABLE `image_data`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -412,6 +484,12 @@ CREATE TABLE IF NOT EXISTS `onewire_devices` (
   KEY `avr_id` (`avr_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- RELATIONS FOR TABLE `onewire_devices`:
+--   `avr_id`
+--       `avr_devices` -> `id`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -429,7 +507,15 @@ CREATE TABLE IF NOT EXISTS `onewire_readings` (
   KEY `sensor_id` (`sensor_id`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id` (`timestamp`,`sensor_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1776 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=138772 ;
+
+--
+-- RELATIONS FOR TABLE `onewire_readings`:
+--   `sensor_id`
+--       `onewire_devices` -> `id`
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -446,7 +532,13 @@ CREATE TABLE IF NOT EXISTS `pressure_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=223750 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=338860 ;
+
+--
+-- RELATIONS FOR TABLE `pressure_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -483,7 +575,7 @@ CREATE TABLE IF NOT EXISTS `rain_readings` (
   UNIQUE KEY `device_id` (`device_id`,`timestamp`),
   KEY `timestamp` (`timestamp`),
   KEY `device_id_2` (`device_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2307 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=21406 ;
 
 -- --------------------------------------------------------
 
@@ -499,7 +591,13 @@ CREATE TABLE IF NOT EXISTS `river_depth_readings` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `device` (`device`,`timestamp`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='River depth in meters' AUTO_INCREMENT=358481 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='River depth in meters' AUTO_INCREMENT=809758 ;
+
+--
+-- RELATIONS FOR TABLE `river_depth_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -524,7 +622,13 @@ CREATE TABLE IF NOT EXISTS `temperature_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=329561 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=582875 ;
+
+--
+-- RELATIONS FOR TABLE `temperature_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -543,7 +647,13 @@ CREATE TABLE IF NOT EXISTS `unprocessed_data` (
   KEY `device_id` (`device_id`),
   KEY `timestamp` (`timestamp`),
   KEY `unpacked` (`unpacked`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=39589 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=94625 ;
+
+--
+-- RELATIONS FOR TABLE `unprocessed_data`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -560,7 +670,13 @@ CREATE TABLE IF NOT EXISTS `unprocessed_smart_data` (
   `corrupt` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `device_id` (`device_id`,`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6124 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=60410 ;
+
+--
+-- RELATIONS FOR TABLE `unprocessed_smart_data`:
+--   `device_id`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -578,7 +694,13 @@ CREATE TABLE IF NOT EXISTS `wind_readings` (
   UNIQUE KEY `device_2` (`device`,`timestamp`),
   KEY `device` (`device`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=277690 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=443274 ;
+
+--
+-- RELATIONS FOR TABLE `wind_readings`:
+--   `device`
+--       `devices` -> `id`
+--
 
 -- --------------------------------------------------------
 
@@ -736,6 +858,44 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 
 --
+-- Constraints for table `accelerometer_readings`
+--
+ALTER TABLE `accelerometer_readings`
+  ADD CONSTRAINT `accelerometer_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `adc_mapping`
+--
+ALTER TABLE `adc_mapping`
+  ADD CONSTRAINT `adc_mapping_ibfk_2` FOREIGN KEY (`name`) REFERENCES `adc_names` (`name`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `adc_mapping_ibfk_1` FOREIGN KEY (`adc_id`) REFERENCES `adc_ids` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `adc_readings`
+--
+ALTER TABLE `adc_readings`
+  ADD CONSTRAINT `adc_readings_ibfk_2` FOREIGN KEY (`adc_id`) REFERENCES `adc_ids` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `adc_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `analog_smart_sensor_readings`
+--
+ALTER TABLE `analog_smart_sensor_readings`
+  ADD CONSTRAINT `analog_smart_sensor_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `battery_readings`
+--
+ALTER TABLE `battery_readings`
+  ADD CONSTRAINT `battery_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `chain_readings`
+--
+ALTER TABLE `chain_readings`
+  ADD CONSTRAINT `chain_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `device_names`
 --
 ALTER TABLE `device_names`
@@ -760,6 +920,19 @@ ALTER TABLE `image_data`
   ADD CONSTRAINT `image_data_ibfk_1` FOREIGN KEY (`device`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `onewire_devices`
+--
+ALTER TABLE `onewire_devices`
+  ADD CONSTRAINT `onewire_devices_ibfk_1` FOREIGN KEY (`avr_id`) REFERENCES `avr_devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `onewire_readings`
+--
+ALTER TABLE `onewire_readings`
+  ADD CONSTRAINT `onewire_readings_ibfk_2` FOREIGN KEY (`sensor_id`) REFERENCES `onewire_devices` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `onewire_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `pressure_readings`
 --
 ALTER TABLE `pressure_readings`
@@ -776,6 +949,18 @@ ALTER TABLE `river_depth_readings`
 --
 ALTER TABLE `temperature_readings`
   ADD CONSTRAINT `temperature_readings_ibfk_1` FOREIGN KEY (`device`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `unprocessed_data`
+--
+ALTER TABLE `unprocessed_data`
+  ADD CONSTRAINT `unprocessed_data_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `unprocessed_smart_data`
+--
+ALTER TABLE `unprocessed_smart_data`
+  ADD CONSTRAINT `unprocessed_smart_data_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `wind_readings`
