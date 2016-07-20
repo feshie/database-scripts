@@ -44,9 +44,12 @@ class FeshieDb(object):
         return self.db is not None
 
     def get_z1_nodes(self):
+        return self.get_nodes()
+
+    def get_nodes(self):
         if not self.connected():
             raise FeshieDbError()
-        self.db.query("SELECT id FROM devices WHERE type = 3")
+        self.db.query("SELECT id FROM device_info WHERE node = 1")
         result = self.db.store_result()
         rows = result.fetch_row(0)
         nodes = []
