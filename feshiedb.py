@@ -369,7 +369,7 @@ class FeshieDb(object):
     def get_battery_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
-        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM battery_readings_corrected WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM battery_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 

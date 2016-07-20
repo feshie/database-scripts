@@ -218,16 +218,7 @@ CREATE TABLE IF NOT EXISTS `battery_readings` (
 --       `devices` -> `id`
 --
 
--- --------------------------------------------------------
 
---
--- Stand-in structure for view `battery_readings_corrected`
---
-CREATE TABLE IF NOT EXISTS `battery_readings_corrected` (
-`device_id` varchar(40)
-,`timestamp` datetime
-,`value` double
-);
 -- --------------------------------------------------------
 
 --
@@ -754,14 +745,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 
 -- --------------------------------------------------------
 
---
--- Structure for view `battery_readings_corrected`
---
-DROP TABLE IF EXISTS `battery_readings_corrected`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `battery_readings_corrected` AS select `battery_readings`.`device_id` AS `device_id`,`battery_readings`.`timestamp` AS `timestamp`,((`battery_readings`.`value` * 1.4417) - 0.2532) AS `value` from `battery_readings`;
-
--- --------------------------------------------------------
 
 --
 -- Structure for view `chain_temperatures`
