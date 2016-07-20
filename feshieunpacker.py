@@ -43,7 +43,19 @@ class FeshieUnpacker(object):
             if temperature < -100:
                 temperature =  float((((int(temperature *4) ) ^ 0x1FF) +1))/4
             self.database.save_temperature(node, timestamp, temperature)
-            self.database.save_voltage(node, timestamp, sample.batt)
+            power_mode = sample.WhichOneof("battery")
+            if "power" == power_mode:
+                self.logger.info("Unpacking Power board")
+                self.database.save_soc(node, timestamp, sample.power.soc)
+                self.database.save_mppt(node, timestamp, float(sample.power.mppt)/10)
+                self.database.save_solar_current(node, timestamp, float(sample.power.current)/1000)
+                self.database.save_voltage(node, timestamp, float(sample.power.batt)/1000)
+            elif "batt" == power_mode:
+                self.logger.info("Using onboard ADC value for battery reading")
+                self.database.save_voltage(node, timestamp, sample.batt)
+            else:
+                self.logger.warn("No voltage measurement type set")
+            
             self.database.save_accelerometer(
                 node, timestamp,
                 sample.accX, sample.accY, sample.accZ)

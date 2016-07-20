@@ -257,6 +257,49 @@ class FeshieDb(object):
         except MySQLdb.Error as e:
             self.logger.error(e)
 
+
+    def save_mppt(self, device_id, timestamp, value):
+        self.logger.debug("Saving MPPT")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO mppt_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
+                (device_id, timestamp, value))
+            cursor.close()
+            self.db.commit()
+        except MySQLdb.Error as e:
+            self.logger.error(e)
+
+    def save_soc(self, device_id, timestamp, value):
+        self.logger.debug("Saving SOC")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO soc_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
+                (device_id, timestamp, value))
+            cursor.close()
+            self.db.commit()
+        except MySQLdb.Error as e:
+            self.logger.error(e)
+
+    def save_solar_current(self, device_id, timestamp, value):
+        self.logger.debug("Saving solar current")
+        if self.db is None:
+            raise FeshieDbError()
+        try:
+            cursor = self.db.cursor()
+            cursor.execute(
+                "INSERT INTO solar_current_readings (device_id, timestamp, value) VALUES (%s, %s, %s)",
+                (device_id, timestamp, value))
+            cursor.close()
+            self.db.commit()
+        except MySQLdb.Error as e:
+            self.logger.error(e)
+
     def save_adc(self, device_id, timestamp, adc_id, value):
         self.logger.debug("Saving adc")
         if self.db is None:
@@ -370,6 +413,27 @@ class FeshieDb(object):
         if self.db is None:
             raise FeshieDbError()
         self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM battery_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_mppt_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM mppt_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_soc_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM soc_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
+        raw = self.db.store_result().fetch_row(0)
+        return raw
+
+    def get_solor_current_readings(self, node):
+        if self.db is None:
+            raise FeshieDbError()
+        self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM solar_current_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))
         raw = self.db.store_result().fetch_row(0)
         return raw
 

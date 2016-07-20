@@ -958,6 +958,114 @@ ALTER TABLE `unprocessed_smart_data`
 ALTER TABLE `wind_readings`
   ADD CONSTRAINT `wind_readings_ibfk_1` FOREIGN KEY (`device`) REFERENCES `devices` (`id`);
 
+
+--
+--  Tables for Sebastians power board and required constraints
+--
+
+
+--
+-- Table structure for table `solar_current_readings`
+--
+
+DROP TABLE IF EXISTS `solar_current_readings`;
+CREATE TABLE `solar_current_readings` (
+  `id` int(11) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `value` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `mppt_readings`
+--
+
+DROP TABLE IF EXISTS `mppt_readings`;
+CREATE TABLE `mppt_readings` (
+  `id` int(11) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `value` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `soc_readings`
+--
+
+DROP TABLE IF EXISTS `soc_readings`;
+CREATE TABLE `soc_readings` (
+  `id` int(11) NOT NULL,
+  `device_id` varchar(40) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `value` int(3) NOT NULL COMMENT 'State of Charge (Percentage)'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Indexes for table `solar_current_readings`
+--
+ALTER TABLE `solar_current_readings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `device_id_2` (`device_id`,`timestamp`),
+  ADD KEY `device_id` (`device_id`),
+  ADD KEY `timestamp` (`timestamp`);
+
+--
+-- Indexes for table `mppt_readings`
+--
+ALTER TABLE `mppt_readings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `device_id` (`device_id`),
+  ADD KEY `timestamp` (`timestamp`);
+
+--
+-- Indexes for table `soc_readings`
+--
+ALTER TABLE `soc_readings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `device_id_2` (`device_id`,`timestamp`),
+  ADD KEY `device_id` (`device_id`),
+  ADD KEY `timestamp` (`timestamp`);
+
+
+--
+-- AUTO_INCREMENT for table `solar_current_readings`
+--
+ALTER TABLE `solar_current_readings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `mppt_readings`
+--
+ALTER TABLE `mppt_readings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `soc_readings`
+--
+ALTER TABLE `soc_readings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- Constraints for table `solar_current_readings`
+--
+ALTER TABLE `solar_current_readings`
+  ADD CONSTRAINT `solar_current_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `mppt_readings`
+--
+ALTER TABLE `mppt_readings`
+  ADD CONSTRAINT `mppt_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `soc_readings`
+--
+ALTER TABLE `soc_readings`
+  ADD CONSTRAINT `soc_readings_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
