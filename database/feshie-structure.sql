@@ -1020,6 +1020,7 @@ ALTER TABLE `mppt_readings`
   ADD PRIMARY KEY (`id`),
   ADD KEY `device_id` (`device_id`),
   ADD KEY `timestamp` (`timestamp`);
+  ADD UNIQUE KEY `device_id_2` (`device_id`,`timestamp`),
 
 --
 -- Indexes for table `soc_readings`
