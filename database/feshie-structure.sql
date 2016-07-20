@@ -869,6 +869,7 @@ ALTER TABLE `accelerometer_readings`
 ALTER TABLE `adc_mapping`
   ADD CONSTRAINT `adc_mapping_ibfk_2` FOREIGN KEY (`name`) REFERENCES `adc_names` (`name`) ON UPDATE CASCADE,
   ADD CONSTRAINT `adc_mapping_ibfk_1` FOREIGN KEY (`adc_id`) REFERENCES `adc_ids` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `adc_mapping_ibfk_3` FOREIGN KEY ( `device_id` ) REFERENCES `feshie`.`devices` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE ;
 
 --
 -- Constraints for table `adc_readings`
@@ -937,6 +938,11 @@ ALTER TABLE `onewire_readings`
 --
 ALTER TABLE `pressure_readings`
   ADD CONSTRAINT `pressure_readings_ibfk_1` FOREIGN KEY (`device`) REFERENCES `devices` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `rain_readings`
+--
+ALTER TABLE `rain_readings` ADD FOREIGN KEY ( `device_id` ) REFERENCES `feshie`.`devices` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE ;
 
 --
 -- Constraints for table `river_depth_readings`
