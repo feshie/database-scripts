@@ -5,8 +5,8 @@ from optparse import OptionParser, OptionGroup
 from binascii import unhexlify as unhex
 from datetime import datetime
 from feshiedb import FeshieDb
-import protocol_buffers.readings_pb2 as readings
-import protocol_buffers.rs485_message_pb2 as rs485_message
+import protocol_buffers.python.readings_pb2 as readings
+import protocol_buffers.python.rs485_message_pb2 as rs485_message
 from google.protobuf.message import DecodeError
 
 
@@ -19,7 +19,7 @@ class FeshieUnpacker(object):
     def __init__(self, config, log_level):
         self.logger = getLogger("Feshie unpacker")
         self.logger.setLevel(log_level)
-        logging_basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging_basicConfig(format='%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
         self.database = FeshieDb(config, log_level)
 
     def unpackall(self):
