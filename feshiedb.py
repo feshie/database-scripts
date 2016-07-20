@@ -433,7 +433,7 @@ class FeshieDb(object):
         raw = self.db.store_result().fetch_row(0)
         return raw
 
-    def get_solor_current_readings(self, node):
+    def get_solar_current_readings(self, node):
         if self.db is None:
             raise FeshieDbError()
         self.db.query("SELECT DATE_FORMAT( timestamp, \"%%Y-%%m-%%d %%H:%%i:00\"), value FROM solar_current_readings WHERE device_id = \"%s\" AND timestamp > \"%s\" AND timestamp <= NOW();" %  (node, DATE_LIMIT))

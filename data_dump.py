@@ -60,6 +60,69 @@ class DataDump(object):
         data.extend(sorted_data)
         return data
 
+    def get_mppt_readings(self):
+        nodes = self.get_nodes()
+        self.logger.info("Using nodes %s", nodes)
+        header = ["timestamp"]
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
+        data = [header]
+        data_raw = {}
+        self.logger.debug(data)
+        for node in nodes:
+            self.logger.debug("Processing node %s", node)
+            values = self.database.get_mppt_readings(node)
+            self.logger.debug("Got %d readings", len(values))
+            for value in values:
+                data_raw = merge_data(data_raw, node, value)
+        self.logger.info("%d timestamps in data", len(data_raw))
+        sorted_data = sort_data(data_raw, nodes)
+        self.logger.debug("%d timestamps in sorted data", len(sorted_data))
+        data.extend(sorted_data)
+        return data
+
+    def get_soc_readings(self):
+        nodes = self.get_nodes()
+        self.logger.info("Using nodes %s", nodes)
+        header = ["timestamp"]
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
+        data = [header]
+        data_raw = {}
+        self.logger.debug(data)
+        for node in nodes:
+            self.logger.debug("Processing node %s", node)
+            values = self.database.get_soc_readings(node)
+            self.logger.debug("Got %d readings", len(values))
+            for value in values:
+                data_raw = merge_data(data_raw, node, value)
+        self.logger.info("%d timestamps in data", len(data_raw))
+        sorted_data = sort_data(data_raw, nodes)
+        self.logger.debug("%d timestamps in sorted data", len(sorted_data))
+        data.extend(sorted_data)
+        return data
+
+    def get_solar_current_readings(self):
+        nodes = self.get_nodes()
+        self.logger.info("Using nodes %s", nodes)
+        header = ["timestamp"]
+        for node in nodes:
+            header.append(self.database.get_node_name(node))
+        data = [header]
+        data_raw = {}
+        self.logger.debug(data)
+        for node in nodes:
+            self.logger.debug("Processing node %s", node)
+            values = self.database.get_solar_current_readings(node)
+            self.logger.debug("Got %d readings", len(values))
+            for value in values:
+                data_raw = merge_data(data_raw, node, value)
+        self.logger.info("%d timestamps in data", len(data_raw))
+        sorted_data = sort_data(data_raw, nodes)
+        self.logger.debug("%d timestamps in sorted data", len(sorted_data))
+        data.extend(sorted_data)
+        return data
+
     def get_adc_readings(self, adc):
         nodes = self.get_nodes()
         self.logger.info("Using nodes %s", nodes)
