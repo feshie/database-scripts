@@ -72,7 +72,6 @@ class FeshieUnpacker(object):
                 self.database.save_smart_reading(node, timestamp, sample.AVR)
             self.database.mark_processed(record.id)
             self.logger.info("Processed %d %s %s", record.id, node, timestamp)
-            return
 
     def unpack_all_smart(self):
         unprocessed_data = self.database.get_all_unprocessed_smart()
