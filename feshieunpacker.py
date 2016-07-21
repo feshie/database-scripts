@@ -55,10 +55,10 @@ class FeshieUnpacker(object):
                 self.database.save_voltage(node, timestamp, sample.batt)
             else:
                 self.logger.warn("No voltage measurement type set")
-            
-            self.database.save_accelerometer(
-                node, timestamp,
-                sample.accX, sample.accY, sample.accZ)
+            # No longer have the accelerometer so no need to even bother storing data
+            #self.database.save_accelerometer(
+            #    node, timestamp,
+            #    sample.accX, sample.accY, sample.accZ)
             if sample.HasField("ADC1"):
                 self.database.save_adc(node, timestamp, 1, sample.ADC1)
             if sample.HasField("ADC2"):
