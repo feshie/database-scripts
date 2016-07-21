@@ -28,6 +28,7 @@ class FeshieUnpacker(object):
         self.logger.info("%d Records to process", no_records)
         for record in unprocessed_data:
             node = record.node
+            self.logger.info("Processing node %s " % node)
             sample = readings.Sample()
             try:
                 sample.ParseFromString(unhex(record.data[2:]))
@@ -39,11 +40,13 @@ class FeshieUnpacker(object):
                 self.database.mark_corrupt(record.id)
                 continue
             timestamp = datetime.utcfromtimestamp(sample.time)
+            self.logger.info("Timestamp = %s" % timestamp)
             temperature = sample.temp
             if temperature < -100:
                 temperature =  float((((int(temperature *4) ) ^ 0x1FF) +1))/4
             self.database.save_temperature(node, timestamp, temperature)
             power_mode = sample.WhichOneof("battery")
+            self.logger.info("Got power mode %s" % power_mode)
             if "power" == power_mode:
                 self.logger.info("Unpacking Power board")
                 self.database.save_soc(node, timestamp, sample.power.soc)
@@ -54,7 +57,7 @@ class FeshieUnpacker(object):
                 self.logger.info("Using onboard ADC value for battery reading")
                 self.database.save_voltage(node, timestamp, sample.batt)
             else:
-                self.logger.warn("No voltage measurement type set")
+                self.logger.warn("No voltage measurement type set (%s)" % node)
             # No longer have the accelerometer so no need to even bother storing data
             #self.database.save_accelerometer(
             #    node, timestamp,
