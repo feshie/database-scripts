@@ -10,6 +10,7 @@ import feshiedb
 # Only need one station at the moment so can b e hardcoded - done is such a way
 # as to make conversion if needed easier
 URL = "http://apps.sepa.org.uk/waterlevels/default.aspx?sd=t&lc=234217"
+CSV_URL = "http://apps.sepa.org.uk/database/riverlevels/234217-SG.csv"
 LOCATION_ID = "Feshie Bridge"
 
 DEFAULT_LOG_LEVEL = logging.ERROR
@@ -26,10 +27,7 @@ class sepa_riverdepth_fetcher(object):
             self.logger.critical("No database connection")
             exit(1)
 
-    def fetch_river_depth(self, url):
-        self.logger.debug("Getting data from %s", url)
-        page = self.get_page(url)
-        csv_link = self.get_csv_link(page)
+    def fetch_river_depth(self, csv_link):
         if csv_link is not None:
             self.logger.debug("Downloading CSV from %s", csv_link)
             csv = self.get_page(csv_link)
@@ -95,4 +93,4 @@ if __name__ == "__main__":
     else:
         CONFIG = OPTIONS.config_file
     SEPA = sepa_riverdepth_fetcher(CONFIG, LOG_LEVEL)
-    SEPA.fetch_river_depth(URL)
+    SEPA.fetch_river_depth(CSV_URL)
