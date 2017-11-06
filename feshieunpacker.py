@@ -89,6 +89,9 @@ class FeshieUnpacker(object):
 
     def unpack_smart(self, device, timestamp, data):
         self.logger.debug("Unpacked %d bytes of smart data", len(data) / 2) #It's hex so each digit is only a nibble
+        if len(data) == 0:
+            self.logger.error("Length of data = 0, unable to proceed")
+            return None
         RS485 = rs485_message.Rs485()
         try:
             RS485.ParseFromString(unhex(data))
